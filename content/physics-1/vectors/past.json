@@ -1,0 +1,324 @@
+[
+ {
+  "exam": "BUET",
+  "session": "2017-18",
+  "topic": "DOT",
+  "type": "উপাংশ থেকে দুটি ভেক্টরের মধ্যবর্তী কোণ",
+  "practice": "t:angcos"
+ },
+ {
+  "exam": "DU",
+  "session": "2009-10",
+  "topic": "DOT",
+  "type": "উপাংশ থেকে দুটি ভেক্টরের মধ্যবর্তী কোণ",
+  "practice": "t:angcos"
+ },
+ {
+  "exam": "DU",
+  "session": "2008-09",
+  "topic": "DOT",
+  "type": "অজানা মান, যাতে ভেক্টর দুটি লম্ব হয়",
+  "practice": "t:perp"
+ },
+ {
+  "exam": "BUET",
+  "session": "2003-04",
+  "topic": "RV",
+  "type": "নদী: ঠিক বিপরীত বিন্দুতে পৌঁছাতে সাঁতারুর দিক",
+  "practice": "t:riverdir"
+ },
+ {
+  "exam": "BUET",
+  "session": "2006-07",
+  "topic": "RV",
+  "type": "বাতাসসহ বৃষ্টি: ছাতা ধরার কোণ",
+  "practice": "t:wind"
+ },
+ {
+  "exam": "RUET",
+  "session": "2004-05",
+  "topic": "RV",
+  "type": "বাতাসসহ বৃষ্টি: গাড়ির কোন বেগে কাচ ভিজবে",
+  "practice": "t:carglass"
+ },
+ {
+  "exam": "DU",
+  "session": "2018-19",
+  "topic": "AD",
+  "type": "সমান দুটি বলের লব্ধি একটি বলের সমান: মধ্যবর্তী কোণ",
+  "practice": "b:সমান মানের দুটি ভেক্টরের লব্ধির মানও একই"
+ },
+ {
+  "exam": "DU",
+  "session": "2017-18",
+  "topic": "AD",
+  "type": "{A} + {B} = {C}, মান 12, 5, 13: {A} ও {B} এর মধ্যবর্তী কোণ",
+  "practice": "t:abc"
+ },
+ {
+  "exam": "CUET",
+  "session": "2015-16",
+  "topic": "AD",
+  "type": "সর্বোচ্চ ও সর্বনিম্ন লব্ধি থেকে লম্ব অবস্থায় লব্ধি",
+  "practice": "t:maxmin"
+ },
+ {
+  "exam": "KUET",
+  "session": "2017-18",
+  "topic": "DC",
+  "type": "ডট ও ক্রস গুণনের মান থেকে মধ্যবর্তী কোণ",
+  "practice": "t:tan"
+ },
+ {
+  "exam": "DU",
+  "session": "2004-05",
+  "topic": "AD",
+  "type": "চিত্র থেকে ভেক্টর যোগের ত্রিভুজ সূত্র",
+  "practice": "b:{AB} + {BC} + {CA}"
+ },
+ {
+  "exam": "BUET",
+  "session": "2010-11",
+  "topic": "RC",
+  "type": "লন রোলার: টানা ও ঠেলায় আপাত ওজন",
+  "practice": "t:roller"
+ },
+ {
+  "exam": "DU",
+  "session": "2010-11",
+  "topic": "AD",
+  "type": "লব্ধি 40 N, ছোট বল 30 N লব্ধির লম্ব: বড় বলের মান",
+  "practice": "t:perpres"
+ },
+ {
+  "exam": "BUET",
+  "session": "2007-08",
+  "topic": "DOT",
+  "type": "({A} + {B}) ও ({A} − {B}) এর মধ্যবর্তী কোণ",
+  "practice": "b:যোগফল ({A} + {B})"
+ },
+ {
+  "exam": "JU",
+  "session": "2015-16",
+  "topic": "RC",
+  "type": "লন রোলার: টানা ও ঠেলায় পার্থক্য",
+  "practice": "t:rollerdiff"
+ },
+ {
+  "exam": "JU",
+  "session": "2013-14",
+  "topic": "AD",
+  "type": "সমান দুটি ভেক্টরের লব্ধি 10√2: মধ্যবর্তী কোণ",
+  "practice": "t:eqres"
+ },
+ {
+  "exam": "SUST",
+  "session": "2007-08",
+  "topic": "RV",
+  "type": "স্রোতের দ্বিগুণ বেগের সাঁতারু সোজা পার হলে তীরের সাথে কোণ",
+  "practice": "t:riverdir"
+ },
+ {
+  "exam": "BUET",
+  "session": "2005-06",
+  "topic": "RC",
+  "type": "উত্তর ও পূর্বমুখী উপাংশ (5, 12) থেকে বাতাসের বেগ",
+  "practice": "t:comp2"
+ },
+ {
+  "exam": "RU",
+  "session": "2016-17",
+  "topic": "CR",
+  "type": "{C} = {A} × {B} এর দিক",
+  "practice": "b:{C} = {A} × {B} হলে {C} এর দিক"
+ },
+ {
+  "exam": "SUST",
+  "session": "2014-15",
+  "topic": "DC",
+  "type": "ডট ও ক্রস গুণনের মান থেকে মধ্যবর্তী কোণ",
+  "practice": "t:tan"
+ },
+ {
+  "exam": "KU",
+  "session": "2008-09",
+  "topic": "CR",
+  "type": "30° কোণে ক্রস গুণনের মান",
+  "practice": "t:crossmag"
+ },
+ {
+  "exam": "BUET",
+  "session": "2007-08",
+  "topic": "CR",
+  "type": "দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল",
+  "practice": "t:area"
+ },
+ {
+  "exam": "DU",
+  "session": "2018-19",
+  "topic": "CR",
+  "type": "{a} + {b} + {c} = 0 (মান 4, 3, 5) হলে |{c} × ({a} × {b})|",
+  "practice": "b:|{c} × ({a} × {b})|"
+ },
+ {
+  "exam": "CUET",
+  "session": "2014-15",
+  "topic": "CR",
+  "type": "দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল",
+  "practice": "t:area"
+ },
+ {
+  "exam": "CUET",
+  "session": "2005-06",
+  "topic": "RC",
+  "type": "বিন্দুর অবস্থান ভেক্টর ও দুই বিন্দুর সংযোজক ভেক্টর",
+  "practice": "t:join"
+ },
+ {
+  "exam": "CUET",
+  "session": "2003-04",
+  "topic": "RV",
+  "type": "নদী: পার হওয়ার সময় থেকে প্রস্থ",
+  "practice": "t:riverwidth"
+ },
+ {
+  "exam": "CUET",
+  "session": "2004-05",
+  "topic": "RV",
+  "type": "নদী: সোজা পার হওয়ার দিক ও সময়",
+  "practice": "t:rstraight"
+ },
+ {
+  "exam": "BUET",
+  "session": "2015-16",
+  "topic": "RV",
+  "type": "নদী: অনুকূল ও প্রতিকূল বেগ থেকে নৌকা ও স্রোতের বেগ",
+  "practice": "t:downup"
+ },
+ {
+  "exam": "BUET",
+  "session": "2006-07",
+  "topic": "AD",
+  "type": "{A} + {B} = {C}, মান 12, 5, 13: {A} ও {B} এর মধ্যবর্তী কোণ",
+  "practice": "t:abc"
+ },
+ {
+  "exam": "CUET",
+  "session": "2013-14",
+  "topic": "RV",
+  "type": "নদী: পার হওয়ার সময় ও লব্ধি বেগ",
+  "practice": "t:riverres"
+ },
+ {
+  "exam": "KUET",
+  "session": "2016-17",
+  "topic": "DOT",
+  "type": "উপাংশ থেকে দুটি ভেক্টরের মধ্যবর্তী কোণ",
+  "practice": "t:angcos"
+ },
+ {
+  "exam": "BUET",
+  "session": "2010-11",
+  "topic": "CR",
+  "type": "অজানা মান, যাতে ভেক্টর দুটি সমান্তরাল হয়",
+  "practice": "t:par"
+ },
+ {
+  "exam": "BUET",
+  "session": "2000-01",
+  "topic": "DOT",
+  "type": "একটি ভেক্টরের ওপর অন্যটির অভিক্ষেপ",
+  "practice": "t:proj"
+ },
+ {
+  "exam": "BUET",
+  "session": "2009-10",
+  "topic": "DOT",
+  "type": "একটি ভেক্টরের ওপর অন্যটির অভিক্ষেপ",
+  "practice": "t:proj"
+ },
+ {
+  "exam": "DU",
+  "session": "2000-01",
+  "topic": "DOT",
+  "type": "অজানা মান, যাতে ভেক্টর দুটি লম্ব হয়",
+  "practice": "t:perp"
+ },
+ {
+  "exam": "JU",
+  "session": "2016-17",
+  "topic": "DOT",
+  "type": "একটি ভেক্টরের ওপর অন্যটির অভিক্ষেপ",
+  "practice": "t:proj"
+ },
+ {
+  "exam": "BUET",
+  "session": "2006-07",
+  "topic": "CR",
+  "type": "দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল",
+  "practice": "t:area"
+ },
+ {
+  "exam": "RUET",
+  "session": "2014-15",
+  "topic": "CR",
+  "type": "দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল",
+  "practice": "t:area"
+ },
+ {
+  "exam": "SUST",
+  "session": "2016-17",
+  "topic": "CR",
+  "type": "উপাংশ থেকে {A} × {B}",
+  "practice": "t:cross3"
+ },
+ {
+  "exam": "DU",
+  "session": "2007-08",
+  "topic": "AD",
+  "type": "দুটি লম্ব ভেক্টরের লব্ধির দিক",
+  "practice": "t:comp2"
+ },
+ {
+  "exam": "KUET",
+  "session": "2014-15",
+  "topic": "CR",
+  "type": "কর্ণ থেকে সামান্তরিকের ক্ষেত্রফল",
+  "practice": "t:diag"
+ },
+ {
+  "exam": "BUET",
+  "session": "2012-13",
+  "topic": "DOT",
+  "type": "অজানা মান, যাতে কাজ শূন্য হয়",
+  "practice": "t:work0"
+ },
+ {
+  "exam": "BUET",
+  "session": "2013-14",
+  "topic": "RC",
+  "type": "বলের ভেক্টর থেকে মান, তারপর ত্বরণ",
+  "practice": "t:forceacc"
+ },
+ {
+  "exam": "RU",
+  "session": "2015-16",
+  "topic": "DOT",
+  "type": "অজানা মান, যাতে কাজ শূন্য হয়",
+  "practice": "t:work0"
+ },
+ {
+  "exam": "KUET",
+  "session": "2015-16",
+  "topic": "DOT",
+  "type": "দুই বিন্দুর মধ্যে ধ্রুব বলের কাজ",
+  "practice": "t:workpts"
+ },
+ {
+  "exam": "RUET",
+  "session": "2015-16",
+  "topic": "CAL",
+  "type": "অজানা মান, যাতে ভেক্টর ক্ষেত্র সলিনয়ডাল হয়",
+  "practice": "t:solen"
+ }
+]

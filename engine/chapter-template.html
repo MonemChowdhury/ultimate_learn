@@ -1,0 +1,366 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>%%PAGE_TITLE%%</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Tiro+Bangla&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: OMR answer-sheet. A single reading column; each question is a sheet row with ক খ গ ঘ bubbles; a sticky status strip carries the timer and tally. */
+:root{
+  --paper:#F6F7F9; --sheet:#FFFFFF; --ink:#1B2130; --muted:#5E6577; --line:#E3DCE2;
+  --omr:#A3245E; --omr-soft:#F7E8EF; --graphite:#2B2F36;
+  --ok:#1F7A3D; --ok-soft:#E5F3E9; --bad:#B8322A; --bad-soft:#FBE9E7; --skip:#8A6D1E; --skip-soft:#FBF3DD;
+  --f-display:"Tiro Bangla","Noto Sans Bengali",serif;
+  --f-body:"Noto Sans Bengali","Noto Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111318; --sheet:#181B22; --ink:#E7E9EF; --muted:#9AA1B2; --line:#30323C;
+  --omr:#E58AB2; --omr-soft:#2C1C25; --graphite:#E7E9EF;
+  --ok:#62C483; --ok-soft:#18291F; --bad:#F07A70; --bad-soft:#331C1A; --skip:#E0BE62; --skip-soft:#2E2816;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111318; --sheet:#181B22; --ink:#E7E9EF; --muted:#9AA1B2; --line:#30323C;
+  --omr:#E58AB2; --omr-soft:#2C1C25; --graphite:#E7E9EF;
+  --ok:#62C483; --ok-soft:#18291F; --bad:#F07A70; --bad-soft:#331C1A; --skip:#E0BE62; --skip-soft:#2E2816;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sheet)}
+.wrap{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{padding-block:28px 0}
+.tabs{display:flex;margin-top:18px;border-bottom:1.5px solid var(--line)}
+.tabs button{font:inherit;font-size:16px;border:0;background:none;color:var(--muted);padding:8px 16px;border-bottom:3px solid transparent;margin-bottom:-1.5px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--omr);border-bottom-color:var(--omr);font-weight:600}
+.tabs button:focus-visible,.jump button:focus-visible,summary:focus-visible{outline:2px solid var(--omr);outline-offset:2px}
+#v-test>.wrap:first-child{padding-block:4px 18px}
+.jump{display:flex;flex-wrap:wrap;gap:8px;padding-block:18px}
+.jump button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.jump button:hover{border-color:var(--omr);color:var(--omr)}
+.ls{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;margin-bottom:16px;scroll-margin-top:12px}
+.ls h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;display:flex;gap:12px;align-items:baseline}
+.ls h2 .k{font-family:var(--f-mono);font-size:14px;color:var(--omr)}
+.ls .lead{color:var(--muted);font-size:14px;margin:2px 0 12px}
+.rules{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;line-height:2}
+.rules li::marker{color:var(--omr);font-family:var(--f-mono);font-size:13px}
+.defs{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:0;margin:0}
+.defs dt,.defs dd{padding:9px 0;border-top:1px solid var(--line);margin:0;line-height:1.9}
+.defs dt{font-weight:600;padding-right:14px}
+@media (max-width:560px){.defs{grid-template-columns:minmax(0,1fr)}.defs dd{border-top:0;padding-top:0}}
+.ol{display:flex;flex-direction:column}
+.ol details{border-top:1px solid var(--line);padding:8px 0}
+.ol summary,.sa summary{cursor:pointer;line-height:1.9;list-style:none;display:flex;gap:10px}
+.ol summary::-webkit-details-marker,.sa summary::-webkit-details-marker{display:none}
+.ol summary::before,.sa summary::before{content:"+";flex:none;width:22px;height:22px;margin-top:4px;border-radius:50%;border:1.5px solid var(--omr);color:var(--omr);display:grid;place-items:center;font-size:14px;line-height:1}
+.ol details[open] summary::before,.sa details[open] summary::before{content:"−"}
+.ol .ans{margin:2px 0 0 32px;font-weight:600;color:var(--ok);line-height:1.9}
+.sa details{border-top:1px solid var(--line);padding:10px 0}
+.sa summary{font-weight:600}
+.sa .ans{margin:6px 0 0 32px;line-height:1.95}
+.showall{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:3px 12px;cursor:pointer;margin-bottom:6px}
+.tblw{overflow-x:auto}
+table.u{border-collapse:collapse;width:100%;font-size:15px;min-width:520px}
+table.u th{text-align:left;font-weight:600;color:var(--muted);font-size:13px;padding:6px 10px 6px 0;border-bottom:1.5px solid var(--line)}
+table.u td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line)}
+table.u td.mono{font-family:var(--f-mono);font-size:14px;white-space:nowrap}
+.trap{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:var(--skip-soft);font-size:15px;line-height:1.9}
+.fc{border-top:1px solid var(--line);padding:14px 0 10px;display:flex;flex-direction:column;gap:8px}
+.fc h3{margin:0;font-size:17px;font-weight:600}
+.fx{background:var(--omr-soft);border-radius:10px;padding:10px 14px;font-family:"Times New Roman",var(--f-body);font-size:18px;line-height:2.1;overflow-x:auto}
+.fl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 12px;font-size:15px;line-height:1.9}
+.fl>span:nth-child(odd){color:var(--muted);font-size:13px;padding-top:3px}
+@media (max-width:560px){.fl{grid-template-columns:minmax(0,1fr)}.fl>span:nth-child(odd){padding-top:6px}}
+.ex ol{margin:0;padding-left:1.2em}
+.det{display:inline-grid;grid-template-columns:repeat(3,auto);gap:0 16px;border-inline:1.5px solid currentColor;padding:0 10px;margin:4px 0;vertical-align:middle;line-height:1.7;text-align:center}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px;border:1.5px dashed var(--omr);border-radius:14px;margin-bottom:40px}
+.cta p{margin:0}
+.eyebrow{font-size:13px;letter-spacing:.06em;color:var(--omr);font-weight:600}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1.25;margin:4px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.seg{display:inline-flex;border:1.5px solid var(--omr);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--omr);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--omr);color:var(--sheet)}
+select,.btn{font:inherit;font-size:14px;border-radius:999px;padding:6px 14px;cursor:pointer}
+select{border:1.5px solid var(--line);background:var(--sheet);color:var(--ink)}
+.btn{border:1.5px solid var(--ink);background:var(--ink);color:var(--sheet);font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:focus-visible,.seg button:focus-visible,select:focus-visible,.opt:focus-visible{outline:2px solid var(--omr);outline-offset:2px}
+.how{margin-top:16px;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.how b{color:var(--ink);font-weight:600}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;line-height:1.8;font-size:14px}
+.steps li::marker{color:var(--omr);font-weight:600}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sheet);border-block:1px solid var(--line)}
+.bar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-block:10px}
+.code{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.tally{display:flex;gap:14px;font-size:14px}
+.tally span{font-variant-numeric:tabular-nums}
+.t-ok{color:var(--ok)} .t-bad{color:var(--bad)}
+.timer{font-family:var(--f-mono);font-size:15px;color:var(--omr);font-variant-numeric:tabular-nums}
+.timer.low{color:var(--bad)}
+.bar .btn{margin-left:auto}
+
+main{padding-block:20px 48px;display:flex;flex-direction:column;gap:14px}
+.result{background:var(--sheet);border:1.5px solid var(--omr);border-radius:14px;padding:20px}
+.result h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:0 0 4px}
+.score{display:flex;flex-wrap:wrap;gap:8px 24px;margin:10px 0 16px;font-variant-numeric:tabular-nums}
+.score div{display:flex;flex-direction:column}
+.score small{color:var(--muted);font-size:13px}
+.score strong{font-size:22px;font-weight:600}
+.topics{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:6px 12px;align-items:center;font-size:14px}
+.meter{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok)}
+.meter i.weak{background:var(--bad)}
+.topics .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.next{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--omr-soft);font-size:14px}
+
+.q{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px}
+.qn{grid-row:span 3;font-family:var(--f-mono);font-size:14px;color:var(--omr);border:1.5px solid var(--omr);border-radius:6px;width:40px;height:40px;display:grid;place-items:center}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.chip{padding:1px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chip.tpl{border-color:var(--omr);color:var(--omr)}
+.qt{font-size:17px;line-height:2;margin:2px 0 6px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.opts{grid-template-columns:minmax(0,1fr)}.q{grid-template-columns:minmax(0,1fr)}.qn{grid-row:auto;width:34px;height:34px}}
+.opt{font:inherit;text-align:left;display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--ink);cursor:pointer;line-height:1.9}
+.opt:hover:not([disabled]){background:var(--omr-soft)}
+.opt[disabled]{cursor:default}
+.bub{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--omr);color:var(--omr);display:grid;place-items:center;font-size:13px;line-height:1}
+.opt.sel .bub{background:var(--graphite);border-color:var(--graphite);color:var(--sheet)}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)}
+.opt.right .bub{background:var(--ok);border-color:var(--ok);color:var(--sheet)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt.wrong .bub{background:var(--bad);border-color:var(--bad);color:var(--sheet)}
+.fb{grid-column:2;margin-top:8px;padding:10px 12px;border-radius:10px;font-size:15px;line-height:1.9}
+@media (max-width:560px){.fb{grid-column:1}}
+.fb.ok{background:var(--ok-soft)} .fb.bad{background:var(--bad-soft)} .fb.skip{background:var(--skip-soft)}
+.fb b{font-weight:600}
+.fb .why{display:block;margin:2px 0}
+.fb.ok b.v{color:var(--ok)} .fb.bad b.v{color:var(--bad)} .fb.skip b.v{color:var(--skip)}
+footer{color:var(--muted);font-size:13px;padding-block:0 40px}
+.past-intro{color:var(--muted);font-size:15px;margin:16px 0 4px;line-height:1.8}
+.pf{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.jump button[aria-pressed="true"]{background:var(--omr);border-color:var(--omr);color:var(--sheet)}
+.pq{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ph{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}
+.uni{font-family:var(--f-mono);font-weight:500;color:var(--omr);font-size:14px}
+.pt{font-size:16px;line-height:1.9}
+.pq .btn.sm{align-self:flex-start;font-size:13px;padding:4px 12px}
+.pp .q{margin-top:6px;border-color:var(--omr)}
+
+/* physics notation */
+.vec{position:relative;display:inline-block;font-style:italic;font-family:"Times New Roman",serif;font-size:1.05em}
+.vec::before{content:"\2192";position:absolute;left:50%;top:-.78em;transform:translateX(-50%);font-size:.7em;font-style:normal;line-height:1}
+.hat{position:relative;display:inline-block;font-style:normal;font-family:"Times New Roman",serif;font-weight:700}
+.hat::before{content:"\02C6";position:absolute;left:50%;top:-.5em;transform:translateX(-50%);font-size:.95em;line-height:1}
+@media (prefers-reduced-motion:no-preference){.opt{transition:background .12s}}
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">ULTIMATE LEARN · প্রোটোটাইপ</div>
+  <h1>%%TITLE%%</h1>
+  <p class="sub">%%SUBTITLE%%</p>
+  <nav class="tabs" role="tablist">
+    <button id="tab-learn" role="tab" aria-selected="true">১ · শেখো</button>
+    <button id="tab-test" role="tab" aria-selected="false">২ · টেস্ট দাও</button>
+    <button id="tab-past" role="tab" aria-selected="false">৩ · বিগত প্রশ্ন</button>
+  </nav>
+</header>
+
+<section id="v-learn" class="wrap">
+  <div class="jump" id="jump"></div>
+  <div id="learnBody"></div>
+  <div class="cta"><p>শেখা শেষ? এবার নিজেকে যাচাই করো। প্রতিবার নতুন প্রশ্ন আসবে।</p><button class="btn" id="go-test">টেস্ট দাও →</button></div>
+</section>
+
+<section id="v-test" hidden>
+<div class="wrap">
+  <div class="controls">
+    <div class="seg" role="group" aria-label="মোড">
+      <button id="m-practice" aria-pressed="true">অনুশীলন</button>
+      <button id="m-exam" aria-pressed="false">পরীক্ষা</button>
+    </div>
+    <select id="count" aria-label="প্রশ্নসংখ্যা">
+      <option value="10">১০ প্রশ্ন</option>
+      <option value="15" selected>১৫ প্রশ্ন</option>
+      <option value="25">২৫ প্রশ্ন</option>
+      <option value="50">৫০ প্রশ্ন</option>
+      <option value="all" id="opt-all">পূর্ণ অধ্যায় টেস্ট</option>
+    </select>
+    <button class="btn ghost" id="new">নতুন টেস্ট বানাও</button>
+  </div>
+  <div class="how" id="how"></div>
+</div>
+
+<div class="bar"><div class="wrap">
+  <span class="code" id="code"></span>
+  <span class="tally" id="tally"></span>
+  <span class="timer" id="timer" hidden></span>
+  <button class="btn" id="submit">ফলাফল দেখো</button>
+</div></div>
+
+<main class="wrap">
+  <section class="result" id="result" hidden></section>
+  <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
+</main>
+</section>
+<section id="v-past" class="wrap" hidden>
+  <p class="past-intro" id="past-intro"></p>
+  <div class="pf"><div class="jump" id="pf-uni" style="padding-block:4px"></div>
+  <select id="pf-year" aria-label="সাল"><option value="0">সব সাল</option><option value="2015">২০১৫–২০১৯</option><option value="2010">২০১০–২০১৪</option><option value="2005">২০০৫–২০০৯</option><option value="2000">২০০০–২০০৪</option></select></div>
+  <div class="code" id="pf-count" style="margin:10px 0"></div>
+  <div id="past-list" style="display:flex;flex-direction:column;gap:12px;padding-bottom:40px"></div>
+</section>
+<footer class="wrap">প্রোটোটাইপ: প্রশ্নগুলো নতুন করে লেখা খসড়া, প্রকাশের আগে বিষয় বিশেষজ্ঞের যাচাই প্রয়োজন। সংখ্যাগত প্রশ্নের উত্তর কোড দিয়ে হিসাব করা হয়।</footer>
+
+<script>
+/* ---------- helpers ---------- */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const nz=(a,b)=>{let x;do{x=ri(a,b)}while(x===0);return x};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const bn=s=>String(s).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const fm=x=>{const s=Number.isInteger(x)?String(x):String(Math.round(x*100)/100);return s.replace('-','−')};
+const p=x=>x<0?'('+fm(x)+')':fm(x);
+const mul=(a,b)=>p(a)+' × '+p(b);
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const frac=(n,d)=>{const g=gcd(n,d)||1;n/=g;d/=g;if(d<0){n=-n;d=-d}return d===1?fm(n):fm(n)+'/'+d};
+function surd(n){if(n===0)return'0';let k=1,m=n;for(let f=2;f*f<=m;f++){while(m%(f*f)===0){m/=f*f;k*=f}}return m===1?String(k):(k===1?'':k)+'√'+m}
+function terms(c,vars){const out=[];const u=['i','j','k'];c.forEach((a,k)=>{if(a===0)return;const ab=Math.abs(a);const co=ab===1?'':ab;const body=co+vars[k]+'['+u[k]+']';out.push(out.length===0?(a<0?'−':'')+body:(a<0?' − ':' + ')+body)});return out.join('')||'0'}
+const vs=c=>terms(c,['','','']);
+const render=s=>s.replace(/\{([^}]+)\}/g,'<span class="vec">$1</span>').replace(/\[([ijknA-Z])\]/g,(m,c)=>'<span class="hat">'+({i:'ı',j:'ȷ'}[c]||c)+'</span>');
+
+/*@@TOPICS@@*/
+
+/*@@BANK@@*/
+
+/*@@TEMPLATES@@*/
+
+/* ---------- build a question ---------- */
+function fromBank(b){return{bi:BANK.indexOf(b),ti:-1,topic:b.t,src:'bank',text:b.q,exp:b.e,opts:shuffle(b.o.map((h,i)=>({h,ok:i===b.a,note:(b.w||{})[i]||''})))}}
+function fromTpl(fn){for(let i=0;i<40;i++){const r=fn();const seen=new Set([r.c]),d=[];for(const[v,n]of r.d){if(!seen.has(v)){seen.add(v);d.push({h:v,ok:false,note:n})}if(d.length===3)break}
+ if(d.length===3)return{bi:-1,ti:TPL.indexOf(fn),topic:r.t,src:'tpl',text:r.q,exp:r.e,opts:shuffle([{h:r.c,ok:true,note:''},...d])}}throw new Error('template failed')}
+
+const TT=TPL.map(f=>f().t);
+/*@@PAST@@*/
+function pastQ(k){if(k.startsWith('t:'))return fromTpl(TPL[TI[k.slice(2)]]);const b=BANK.find(x=>x.q.includes(k.slice(2)));return fromBank(b)}
+
+/* each slot draws a topic by its admission share (weak topics ×3), then a bank question or a template from it; a drawn topic's share shrinks so tests stay varied */
+function makeTest(n,weak,seen){
+ if(n==='all')return shuffle(BANK.map(fromBank).concat(TPL.map(fromTpl)));
+ seen=seen||{b:new Set(),t:new Set()};
+ const wk=weak||{},w={};for(const t in TW)w[t]=TW[t]*(wk[t]?3:1);
+ const uB=new Set(),uT=new Set(),qs=[];let guard=0;
+ while(qs.length<n&&guard++<500){
+  const keys=Object.keys(w).filter(t=>w[t]>0);if(!keys.length)break;
+  let r=Math.random()*keys.reduce((s,t)=>s+w[t],0),t=keys[keys.length-1];for(const k of keys){r-=w[k];if(r<0){t=k;break}}
+  const b=BANK.map((_,i)=>i).filter(i=>BANK[i].t===t&&!uB.has(i)),all=TT.map((_,i)=>i).filter(i=>TT[i]===t),tp=all.filter(i=>!uT.has(i));
+  if(tp.length&&(!b.length||Math.random()<0.45)){const tu=tp.filter(i=>!seen.t.has(i)),i=pick(tu.length?tu:tp);uT.add(i);qs.push(fromTpl(TPL[i]))}
+  else if(b.length){const bu=b.filter(i=>!seen.b.has(i)),i=pick(bu.length?bu:b);uB.add(i);qs.push(fromBank(BANK[i]))}
+  else if(all.length)qs.push(fromTpl(TPL[pick(all)]));
+  else{w[t]=0;continue}
+  w[t]*=0.7}
+ return shuffle(qs)}
+
+if(typeof module!=='undefined'){module.exports={makeTest,BANK,TPL,fromTpl};}
+
+/* ---------- UI ---------- */
+if(typeof document!=='undefined'){
+const $=id=>document.getElementById(id);const L=['ক','খ','গ','ঘ'];
+const S={mode:'practice',n:15,qs:[],ans:{},done:false,timer:null,left:0,weak:{},code:'',seen:{b:new Set(),t:new Set()}};
+
+$('opt-all').textContent=`পূর্ণ অধ্যায় টেস্ট (${bn(BANK.length+TPL.length)}টি, প্রতিটি ধরন একবার)`;
+$('how').innerHTML=`<ol class="steps"><li><b>মোড বাছো।</b> অনুশীলন: প্রতিটি উত্তর দেওয়ার সাথে সাথে সঠিক না ভুল আর কেন, দেখাবে। পরীক্ষা: টাইমার চলবে, উত্তর শেষে দেখাবে, প্রতিটি ভুলে −০.২৫।</li><li><b>কয়টি প্রশ্ন বাছো।</b> “পূর্ণ অধ্যায় টেস্ট” এ অধ্যায়ের প্রতিটি ধরনের প্রশ্ন একবার করে আসে।</li><li><b>নিচে নেমে উত্তর দাও:</b> ক, খ, গ বা ঘ চাপো। শেষে “ফলাফল দেখো” চাপলে কোন অংশে দুর্বল তা দেখাবে।</li><li><b>“পরের টেস্ট”</b> চাপলে নতুন প্রশ্ন আসবে; দুর্বল অংশ আর আগে না দেখা প্রশ্ন আগে আসবে।</li></ol>`;
+
+function newTest(){clearInterval(S.timer);if(S.seen.b.size+S.seen.t.size>=BANK.length+TPL.length-6){S.seen.b.clear();S.seen.t.clear()}S.qs=makeTest(S.n,S.weak,S.seen);S.qs.forEach(q=>{if(q.bi>=0)S.seen.b.add(q.bi);if(q.ti>=0)S.seen.t.add(q.ti)});S.ans={};S.done=false;S.code=Math.random().toString(16).slice(2,6).toUpperCase();
+ $('result').hidden=true;$('submit').textContent=S.mode==='exam'?'জমা দাও':'ফলাফল দেখো';$('submit').hidden=false;
+ S.timer=null;if(S.mode==='exam'){S.left=S.qs.length*45;$('timer').hidden=false;tick();if(!$('v-test').hidden)startTimer()}else $('timer').hidden=true;
+ renderAll()}
+function startTimer(){if(S.mode!=='exam'||S.done||S.timer)return;S.timer=setInterval(()=>{S.left--;tick();if(S.left<=0)finish()},1000)}
+function tick(){const m=Math.floor(Math.max(S.left,0)/60),s=Math.max(S.left,0)%60;$('timer').textContent='⏱ '+bn(String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'));$('timer').classList.toggle('low',S.left<60)}
+const reveal=i=>S.done||(S.mode==='practice'&&S.ans[i]!==undefined);
+
+function card(q,i){const a=S.ans[i],rv=reveal(i);
+ const opts=q.opts.map((o,k)=>{let c='opt';if(rv){if(o.ok)c+=' right';else if(a===k)c+=' wrong'}else if(a===k)c+=' sel';
+  return`<button class="${c}" data-q="${i}" data-o="${k}" ${rv?'disabled':''} aria-label="${L[k]}"><span class="bub">${L[k]}</span><span>${render(o.h)}</span></button>`}).join('');
+ let fb='';if(rv){const ci=q.opts.findIndex(o=>o.ok),co=q.opts[ci];
+  if(a===undefined)fb=`<div class="fb skip"><b class="v">উত্তর দাওনি।</b> সঠিক উত্তর: (${L[ci]}) ${render(co.h)}<span class="why">${render(q.exp)}</span></div>`;
+  else if(q.opts[a].ok)fb=`<div class="fb ok"><b class="v">সঠিক।</b><span class="why">${render(q.exp)}</span></div>`;
+  else{const n=q.opts[a].note;fb=`<div class="fb bad"><b class="v">ভুল।</b> ${n?'<span class="why"><b>তোমার ভুলটা কোথায়:</b> '+render(n)+'</span>':''}<span class="why"><b>সঠিক উত্তর:</b> (${L[ci]}) ${render(co.h)}</span><span class="why">${render(q.exp)}</span></div>`}}
+ return`<article class="q" id="q${i}"><div class="qn">${bn(String(i+1).padStart(2,'0'))}</div><div class="meta"><span class="chip">${q.topic}</span>${q.src==='tpl'?'<span class="chip tpl">নতুন সংখ্যা</span>':''}</div><div class="qt">${render(q.text)}</div><div class="opts">${opts}</div>${fb}</article>`}
+
+function renderAll(){$('list').innerHTML=S.qs.map(card).join('');status()}
+function status(){const n=S.qs.length,done=Object.keys(S.ans).length;let ok=0,bad=0;
+ for(const[i,a]of Object.entries(S.ans)){if(S.qs[i].opts[a].ok)ok++;else bad++}
+ $('code').textContent='টেস্ট কোড '+S.code;
+ $('tally').innerHTML=`<span>উত্তর ${bn(done)}/${bn(n)}</span>`+((S.mode==='practice'||S.done)?`<span class="t-ok">✓ ${bn(ok)}</span><span class="t-bad">✗ ${bn(bad)}</span>`:'')}
+
+function finish(){if(S.done)return;clearInterval(S.timer);S.done=true;renderAll();
+ const n=S.qs.length;let ok=0,bad=0;const T={};
+ S.qs.forEach((q,i)=>{T[q.topic]=T[q.topic]||{c:0,n:0};T[q.topic].n++;const a=S.ans[i];if(a===undefined)return;if(q.opts[a].ok){ok++;T[q.topic].c++}else bad++});
+ const skip=n-ok-bad,marks=ok-bad*0.25;
+ const rows=Object.entries(T).sort((x,y)=>x[1].c/x[1].n-y[1].c/y[1].n);
+ S.weak={};rows.forEach(([t,v])=>{if(v.c/v.n<0.6)S.weak[t]=1});
+ const wk=Object.keys(S.weak);
+ $('result').innerHTML=`<h2>ফলাফল</h2><div class="code">টেস্ট কোড ${S.code} · ${S.mode==='exam'?'পরীক্ষা মোড':'অনুশীলন মোড'}</div>
+ <div class="score"><div><small>সঠিক</small><strong class="t-ok">${bn(ok)}</strong></div><div><small>ভুল</small><strong class="t-bad">${bn(bad)}</strong></div><div><small>উত্তর দাওনি</small><strong>${bn(skip)}</strong></div><div><small>নম্বর (ভুলে −০.২৫)</small><strong>${bn(fm(marks))} / ${bn(n)}</strong></div></div>
+ <div class="topics">${rows.map(([t,v])=>{const r=v.c/v.n;return`<span>${t}</span><span class="meter"><i class="${r<0.6?'weak':''}" style="width:${Math.round(r*100)}%"></i></span><span class="n">${bn(v.c)}/${bn(v.n)}</span>`}).join('')}</div>
+ <div class="next">${wk.length?`দুর্বল অংশ: <b>${wk.join(', ')}</b>। “পরের টেস্ট” চাপলে এই অংশ থেকে বেশি প্রশ্ন আসবে।`:'সব অংশে ভালো করেছ। পরের টেস্টে নতুন প্রশ্ন ও নতুন সংখ্যা আসবে।'}</div>
+ <div class="next">এ পর্যন্ত দেখা হয়েছে <b>${bn(S.seen.b.size+S.seen.t.size)}/${bn(BANK.length+TPL.length)}</b> ধরনের প্রশ্ন। পরের টেস্টে বাকিগুলো আগে আসবে।</div>
+ <div style="margin-top:14px"><button class="btn" id="next-test">পরের টেস্ট →</button></div>`;
+ $('next-test').onclick=()=>{newTest();window.scrollTo({top:0,behavior:'smooth'})};
+ $('result').hidden=false;$('submit').hidden=true;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+
+$('list').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||b.disabled||S.done)return;const i=+b.dataset.q,k=+b.dataset.o;
+ if(S.mode==='practice'&&S.ans[i]!==undefined)return;S.ans[i]=k;$('q'+i).outerHTML=card(S.qs[i],i);status();
+ if(S.mode==='practice'&&Object.keys(S.ans).length===S.qs.length)finish()});
+/* ---------- past questions ---------- */
+const PS={uni:'',year:0,q:{},a:{}};
+const unis=Object.entries(PAST.reduce((m,r)=>(m[r[0]]=(m[r[0]]||0)+1,m),{})).sort((x,y)=>y[1]-x[1]);
+$('past-intro').innerHTML=`২০০০–২০১৯ সালের ভর্তি পরীক্ষায় এই অধ্যায় থেকে কোন ধরনের প্রশ্ন এসেছিল, তার তালিকা। প্রতিটির নিচে <b>একই ধরনের অনুশীলন প্রশ্ন</b> আছে, নতুন সংখ্যায়। এটি মূল প্রশ্ন হুবহু নয়।`;
+function renderPast(){
+ $('pf-uni').innerHTML=[['','সব',PAST.length],...unis.map(([u,c])=>[u,u,c])].map(([v,l,c])=>`<button data-uni="${v}" aria-pressed="${PS.uni===v}">${l} ${bn(c)}</button>`).join('');
+ const rows=PAST.map((r,i)=>[r,i]).filter(([r])=>(!PS.uni||r[0]===PS.uni)&&(!PS.year||(+r[1].slice(0,4)>=PS.year&&+r[1].slice(0,4)<PS.year+5))).sort((x,y)=>y[0][1].localeCompare(x[0][1]));
+ $('pf-count').textContent=`${bn(rows.length)}টি প্রশ্ন`;
+ $('past-list').innerHTML=rows.map(([r,i])=>`<article class="pq"><div class="ph"><span class="uni">${r[0]}</span><span class="code">${bn(r[1])}</span><span class="chip">${r[2]}</span></div><div class="pt">${render(r[3])}</div><button class="btn ghost sm" data-pp="${i}">${PS.q[i]?'আরেকটি দাও':'এই ধরনের প্রশ্ন অনুশীলন করো'}</button><div class="pp" id="pp${i}">${PS.q[i]?pcard(i):''}</div></article>`).join('')||'<p class="code">এই ফিল্টারে কোনো প্রশ্ন নেই।</p>'}
+function pcard(i){const q=PS.q[i],a=PS.a[i],rv=a!==undefined;
+ const opts=q.opts.map((o,k)=>{let c='opt';if(rv){if(o.ok)c+=' right';else if(a===k)c+=' wrong'}return`<button class="${c}" data-pi="${i}" data-po="${k}" ${rv?'disabled':''}><span class="bub">${L[k]}</span><span>${render(o.h)}</span></button>`}).join('');
+ let fb='';if(rv){const ci=q.opts.findIndex(o=>o.ok);fb=q.opts[a].ok?`<div class="fb ok"><b class="v">সঠিক।</b><span class="why">${render(q.exp)}</span></div>`:`<div class="fb bad"><b class="v">ভুল।</b> ${q.opts[a].note?'<span class="why"><b>তোমার ভুলটা কোথায়:</b> '+render(q.opts[a].note)+'</span>':''}<span class="why"><b>সঠিক উত্তর:</b> (${L[ci]}) ${render(q.opts[ci].h)}</span><span class="why">${render(q.exp)}</span></div>`}
+ return`<div class="q"><div class="qn">অনু</div><div class="meta">${q.src==='tpl'?'<span class="chip tpl">নতুন সংখ্যা</span>':'<span class="chip">একই ধরন</span>'}</div><div class="qt">${render(q.text)}</div><div class="opts">${opts}</div>${fb}</div>`}
+$('pf-uni').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;PS.uni=b.dataset.uni;renderPast()});
+$('pf-year').onchange=e=>{PS.year=+e.target.value;renderPast()};
+$('past-list').addEventListener('click',e=>{const g=e.target.closest('[data-pp]');if(g){const i=+g.dataset.pp;PS.q[i]=pastQ(PAST[i][4]);delete PS.a[i];$('pp'+i).innerHTML=pcard(i);g.textContent='আরেকটি দাও';return}
+ const o=e.target.closest('[data-pi]');if(!o||o.disabled)return;const i=+o.dataset.pi;PS.a[i]=+o.dataset.po;$('pp'+i).innerHTML=pcard(i)});
+
+/* ---------- learning part ---------- */
+/*@@LEARN@@*/
+const SECS=[['rules','নিয়ম'],['defs','সংজ্ঞা'],['one','এক কথায় উত্তর'],['short','সংক্ষিপ্ত প্রশ্ন'],['units','একক ও মাত্রা'],['form','সূত্র ও শর্টকাট']];
+function head(i,lead){return`<h2><span class="k">${bn(i+1)}</span>${SECS[i][1]}</h2><p class="lead">${lead}</p>`}
+$('jump').innerHTML=`<button data-to="" aria-pressed="true">সব</button>`+SECS.map(([id,t],i)=>`<button data-to="s-${id}" aria-pressed="false">${bn(i+1)}. ${t}</button>`).join('');
+$('learnBody').innerHTML=
+`<section class="ls" id="s-rules">${head(0,'যে নিয়মগুলো থেকে সরাসরি MCQ আসে।')}<ol class="rules">${RULES.map(r=>`<li>${render(r)}</li>`).join('')}</ol></section>
+<section class="ls" id="s-defs">${head(1,'পরীক্ষায় যে সংজ্ঞাগুলো সবচেয়ে বেশি আসে।')}<dl class="defs">${DEFS.map(([t,d])=>`<dt>${t}</dt><dd>${render(d)}</dd>`).join('')}</dl></section>
+<section class="ls" id="s-one">${head(2,'প্রশ্নে চাপ দিয়ে উত্তর দেখো। আগে নিজে উত্তর ভেবে নাও।')}<button class="showall" data-all="s-one">সব উত্তর দেখাও</button><div class="ol">${ONE.map(([q,a])=>`<details><summary>${render(q)}</summary><div class="ans">→ ${render(a)}</div></details>`).join('')}</div></section>
+<section class="ls" id="s-short">${head(3,'২–৩ লাইনে লেখার মতো “কেন” প্রশ্ন।')}<button class="showall" data-all="s-short">সব উত্তর দেখাও</button><div class="sa">${SHORT.map(([q,a])=>`<details><summary>${render(q)}</summary><div class="ans">${render(a)}</div></details>`).join('')}</div></section>
+<section class="ls" id="s-units">${head(4,'এই অধ্যায়ের রাশিগুলোর ধরন, SI একক ও মাত্রা।')}<div class="tblw"><table class="u"><thead><tr><th>রাশি</th><th>ধরন</th><th>SI একক</th><th>মাত্রা</th></tr></thead><tbody>${UNITS.map(([a,b,c,d])=>`<tr><td>${a}</td><td>${b}</td><td class="mono">${c}</td><td class="mono">${d==='মাত্রাহীন'?d:'['+d+']'}</td></tr>`).join('')}</tbody></table></div>
+<div class="trap"><b>ফাঁদ:</b> কাজ ও টর্কের মাত্রা একই [ML²T⁻²], কিন্তু কাজ স্কেলার আর টর্ক ভেক্টর। টর্কের একক N m লেখা হয়, J নয়।</div></section>
+<section class="ls" id="s-form">${head(5,'প্রতিটি সূত্র কখন খাটে, দ্রুত সমাধানের কৌশল, আর একটি সমাধান করা উদাহরণ।')}${FORM.map(o=>`<div class="fc"><h3>${o.h}</h3><div class="fx">${render(o.f)}</div><div class="fl"><span>কখন খাটে</span><span>${render(o.w)}</span><span>শর্টকাট</span><span>${render(o.c)}</span><span>উদাহরণ</span><span class="ex">${render(o.x)}<ol>${o.s.map(x=>`<li>${render(x)}</li>`).join('')}</ol></span></div></div>`).join('')}</section>`;
+$('jump').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const to=b.dataset.to;
+ $('jump').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+ document.querySelectorAll('#learnBody>.ls').forEach(sec=>sec.hidden=!!to&&sec.id!==to)});
+$('learnBody').addEventListener('click',e=>{const b=e.target.closest('.showall');if(!b)return;const ds=$(b.dataset.all).querySelectorAll('details');const open=b.dataset.open!=='1';ds.forEach(d=>d.open=open);b.dataset.open=open?'1':'0';b.textContent=open?'সব উত্তর লুকাও':'সব উত্তর দেখাও'});
+
+function show(v){const t=v==='test';['learn','test','past'].forEach(x=>{$('v-'+x).hidden=x!==v;$('tab-'+x).setAttribute('aria-selected',x===v)});
+ if(t)startTimer();else{clearInterval(S.timer);S.timer=null}
+ if(location.hash!=='#'+v)history.replaceState(null,'','#'+v);window.scrollTo({top:0})}
+$('tab-learn').onclick=()=>show('learn');$('tab-past').onclick=()=>show('past');$('tab-test').onclick=()=>show('test');$('go-test').onclick=()=>show('test');
+const view=()=>['#test','#past'].includes(location.hash)?location.hash.slice(1):'learn';
+window.addEventListener('hashchange',()=>show(view()));
+
+$('submit').onclick=finish;$('new').onclick=newTest;
+$('count').onchange=e=>{S.n=e.target.value==='all'?'all':+e.target.value;newTest()};
+['practice','exam'].forEach(m=>$('m-'+m).onclick=()=>{S.mode=m;$('m-practice').setAttribute('aria-pressed',m==='practice');$('m-exam').setAttribute('aria-pressed',m==='exam');newTest()});
+newTest();renderPast();show(view());
+}
+</script>
+
+</body></html>

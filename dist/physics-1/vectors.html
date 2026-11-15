@@ -1,0 +1,605 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ভেক্টর টেস্ট জেনারেটর</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Tiro+Bangla&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: OMR answer-sheet. A single reading column; each question is a sheet row with ক খ গ ঘ bubbles; a sticky status strip carries the timer and tally. */
+:root{
+  --paper:#F6F7F9; --sheet:#FFFFFF; --ink:#1B2130; --muted:#5E6577; --line:#E3DCE2;
+  --omr:#A3245E; --omr-soft:#F7E8EF; --graphite:#2B2F36;
+  --ok:#1F7A3D; --ok-soft:#E5F3E9; --bad:#B8322A; --bad-soft:#FBE9E7; --skip:#8A6D1E; --skip-soft:#FBF3DD;
+  --f-display:"Tiro Bangla","Noto Sans Bengali",serif;
+  --f-body:"Noto Sans Bengali","Noto Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111318; --sheet:#181B22; --ink:#E7E9EF; --muted:#9AA1B2; --line:#30323C;
+  --omr:#E58AB2; --omr-soft:#2C1C25; --graphite:#E7E9EF;
+  --ok:#62C483; --ok-soft:#18291F; --bad:#F07A70; --bad-soft:#331C1A; --skip:#E0BE62; --skip-soft:#2E2816;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111318; --sheet:#181B22; --ink:#E7E9EF; --muted:#9AA1B2; --line:#30323C;
+  --omr:#E58AB2; --omr-soft:#2C1C25; --graphite:#E7E9EF;
+  --ok:#62C483; --ok-soft:#18291F; --bad:#F07A70; --bad-soft:#331C1A; --skip:#E0BE62; --skip-soft:#2E2816;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sheet)}
+.wrap{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{padding-block:28px 0}
+.tabs{display:flex;margin-top:18px;border-bottom:1.5px solid var(--line)}
+.tabs button{font:inherit;font-size:16px;border:0;background:none;color:var(--muted);padding:8px 16px;border-bottom:3px solid transparent;margin-bottom:-1.5px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--omr);border-bottom-color:var(--omr);font-weight:600}
+.tabs button:focus-visible,.jump button:focus-visible,summary:focus-visible{outline:2px solid var(--omr);outline-offset:2px}
+#v-test>.wrap:first-child{padding-block:4px 18px}
+.jump{display:flex;flex-wrap:wrap;gap:8px;padding-block:18px}
+.jump button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.jump button:hover{border-color:var(--omr);color:var(--omr)}
+.ls{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;margin-bottom:16px;scroll-margin-top:12px}
+.ls h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;display:flex;gap:12px;align-items:baseline}
+.ls h2 .k{font-family:var(--f-mono);font-size:14px;color:var(--omr)}
+.ls .lead{color:var(--muted);font-size:14px;margin:2px 0 12px}
+.rules{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;line-height:2}
+.rules li::marker{color:var(--omr);font-family:var(--f-mono);font-size:13px}
+.defs{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:0;margin:0}
+.defs dt,.defs dd{padding:9px 0;border-top:1px solid var(--line);margin:0;line-height:1.9}
+.defs dt{font-weight:600;padding-right:14px}
+@media (max-width:560px){.defs{grid-template-columns:minmax(0,1fr)}.defs dd{border-top:0;padding-top:0}}
+.ol{display:flex;flex-direction:column}
+.ol details{border-top:1px solid var(--line);padding:8px 0}
+.ol summary,.sa summary{cursor:pointer;line-height:1.9;list-style:none;display:flex;gap:10px}
+.ol summary::-webkit-details-marker,.sa summary::-webkit-details-marker{display:none}
+.ol summary::before,.sa summary::before{content:"+";flex:none;width:22px;height:22px;margin-top:4px;border-radius:50%;border:1.5px solid var(--omr);color:var(--omr);display:grid;place-items:center;font-size:14px;line-height:1}
+.ol details[open] summary::before,.sa details[open] summary::before{content:"−"}
+.ol .ans{margin:2px 0 0 32px;font-weight:600;color:var(--ok);line-height:1.9}
+.sa details{border-top:1px solid var(--line);padding:10px 0}
+.sa summary{font-weight:600}
+.sa .ans{margin:6px 0 0 32px;line-height:1.95}
+.showall{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:3px 12px;cursor:pointer;margin-bottom:6px}
+.tblw{overflow-x:auto}
+table.u{border-collapse:collapse;width:100%;font-size:15px;min-width:520px}
+table.u th{text-align:left;font-weight:600;color:var(--muted);font-size:13px;padding:6px 10px 6px 0;border-bottom:1.5px solid var(--line)}
+table.u td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line)}
+table.u td.mono{font-family:var(--f-mono);font-size:14px;white-space:nowrap}
+.trap{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:var(--skip-soft);font-size:15px;line-height:1.9}
+.fc{border-top:1px solid var(--line);padding:14px 0 10px;display:flex;flex-direction:column;gap:8px}
+.fc h3{margin:0;font-size:17px;font-weight:600}
+.fx{background:var(--omr-soft);border-radius:10px;padding:10px 14px;font-family:"Times New Roman",var(--f-body);font-size:18px;line-height:2.1;overflow-x:auto}
+.fl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 12px;font-size:15px;line-height:1.9}
+.fl>span:nth-child(odd){color:var(--muted);font-size:13px;padding-top:3px}
+@media (max-width:560px){.fl{grid-template-columns:minmax(0,1fr)}.fl>span:nth-child(odd){padding-top:6px}}
+.ex ol{margin:0;padding-left:1.2em}
+.det{display:inline-grid;grid-template-columns:repeat(3,auto);gap:0 16px;border-inline:1.5px solid currentColor;padding:0 10px;margin:4px 0;vertical-align:middle;line-height:1.7;text-align:center}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px;border:1.5px dashed var(--omr);border-radius:14px;margin-bottom:40px}
+.cta p{margin:0}
+.eyebrow{font-size:13px;letter-spacing:.06em;color:var(--omr);font-weight:600}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1.25;margin:4px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.seg{display:inline-flex;border:1.5px solid var(--omr);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--omr);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--omr);color:var(--sheet)}
+select,.btn{font:inherit;font-size:14px;border-radius:999px;padding:6px 14px;cursor:pointer}
+select{border:1.5px solid var(--line);background:var(--sheet);color:var(--ink)}
+.btn{border:1.5px solid var(--ink);background:var(--ink);color:var(--sheet);font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:focus-visible,.seg button:focus-visible,select:focus-visible,.opt:focus-visible{outline:2px solid var(--omr);outline-offset:2px}
+.how{margin-top:16px;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.how b{color:var(--ink);font-weight:600}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;line-height:1.8;font-size:14px}
+.steps li::marker{color:var(--omr);font-weight:600}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sheet);border-block:1px solid var(--line)}
+.bar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-block:10px}
+.code{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.tally{display:flex;gap:14px;font-size:14px}
+.tally span{font-variant-numeric:tabular-nums}
+.t-ok{color:var(--ok)} .t-bad{color:var(--bad)}
+.timer{font-family:var(--f-mono);font-size:15px;color:var(--omr);font-variant-numeric:tabular-nums}
+.timer.low{color:var(--bad)}
+.bar .btn{margin-left:auto}
+
+main{padding-block:20px 48px;display:flex;flex-direction:column;gap:14px}
+.result{background:var(--sheet);border:1.5px solid var(--omr);border-radius:14px;padding:20px}
+.result h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:0 0 4px}
+.score{display:flex;flex-wrap:wrap;gap:8px 24px;margin:10px 0 16px;font-variant-numeric:tabular-nums}
+.score div{display:flex;flex-direction:column}
+.score small{color:var(--muted);font-size:13px}
+.score strong{font-size:22px;font-weight:600}
+.topics{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:6px 12px;align-items:center;font-size:14px}
+.meter{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok)}
+.meter i.weak{background:var(--bad)}
+.topics .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.next{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--omr-soft);font-size:14px}
+
+.q{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px}
+.qn{grid-row:span 3;font-family:var(--f-mono);font-size:14px;color:var(--omr);border:1.5px solid var(--omr);border-radius:6px;width:40px;height:40px;display:grid;place-items:center}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.chip{padding:1px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chip.tpl{border-color:var(--omr);color:var(--omr)}
+.qt{font-size:17px;line-height:2;margin:2px 0 6px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.opts{grid-template-columns:minmax(0,1fr)}.q{grid-template-columns:minmax(0,1fr)}.qn{grid-row:auto;width:34px;height:34px}}
+.opt{font:inherit;text-align:left;display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--ink);cursor:pointer;line-height:1.9}
+.opt:hover:not([disabled]){background:var(--omr-soft)}
+.opt[disabled]{cursor:default}
+.bub{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--omr);color:var(--omr);display:grid;place-items:center;font-size:13px;line-height:1}
+.opt.sel .bub{background:var(--graphite);border-color:var(--graphite);color:var(--sheet)}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)}
+.opt.right .bub{background:var(--ok);border-color:var(--ok);color:var(--sheet)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt.wrong .bub{background:var(--bad);border-color:var(--bad);color:var(--sheet)}
+.fb{grid-column:2;margin-top:8px;padding:10px 12px;border-radius:10px;font-size:15px;line-height:1.9}
+@media (max-width:560px){.fb{grid-column:1}}
+.fb.ok{background:var(--ok-soft)} .fb.bad{background:var(--bad-soft)} .fb.skip{background:var(--skip-soft)}
+.fb b{font-weight:600}
+.fb .why{display:block;margin:2px 0}
+.fb.ok b.v{color:var(--ok)} .fb.bad b.v{color:var(--bad)} .fb.skip b.v{color:var(--skip)}
+footer{color:var(--muted);font-size:13px;padding-block:0 40px}
+.past-intro{color:var(--muted);font-size:15px;margin:16px 0 4px;line-height:1.8}
+.pf{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.jump button[aria-pressed="true"]{background:var(--omr);border-color:var(--omr);color:var(--sheet)}
+.pq{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ph{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}
+.uni{font-family:var(--f-mono);font-weight:500;color:var(--omr);font-size:14px}
+.pt{font-size:16px;line-height:1.9}
+.pq .btn.sm{align-self:flex-start;font-size:13px;padding:4px 12px}
+.pp .q{margin-top:6px;border-color:var(--omr)}
+
+/* physics notation */
+.vec{position:relative;display:inline-block;font-style:italic;font-family:"Times New Roman",serif;font-size:1.05em}
+.vec::before{content:"\2192";position:absolute;left:50%;top:-.78em;transform:translateX(-50%);font-size:.7em;font-style:normal;line-height:1}
+.hat{position:relative;display:inline-block;font-style:normal;font-family:"Times New Roman",serif;font-weight:700}
+.hat::before{content:"\02C6";position:absolute;left:50%;top:-.5em;transform:translateX(-50%);font-size:.95em;line-height:1}
+@media (prefers-reduced-motion:no-preference){.opt{transition:background .12s}}
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">ULTIMATE LEARN · প্রোটোটাইপ</div>
+  <h1>ভেক্টর</h1>
+  <p class="sub">পদার্থবিজ্ঞান ১ম পত্র, অধ্যায় ২ · বিশ্ববিদ্যালয় ভর্তি প্রস্তুতি</p>
+  <nav class="tabs" role="tablist">
+    <button id="tab-learn" role="tab" aria-selected="true">১ · শেখো</button>
+    <button id="tab-test" role="tab" aria-selected="false">২ · টেস্ট দাও</button>
+    <button id="tab-past" role="tab" aria-selected="false">৩ · বিগত প্রশ্ন</button>
+  </nav>
+</header>
+
+<section id="v-learn" class="wrap">
+  <div class="jump" id="jump"></div>
+  <div id="learnBody"></div>
+  <div class="cta"><p>শেখা শেষ? এবার নিজেকে যাচাই করো। প্রতিবার নতুন প্রশ্ন আসবে।</p><button class="btn" id="go-test">টেস্ট দাও →</button></div>
+</section>
+
+<section id="v-test" hidden>
+<div class="wrap">
+  <div class="controls">
+    <div class="seg" role="group" aria-label="মোড">
+      <button id="m-practice" aria-pressed="true">অনুশীলন</button>
+      <button id="m-exam" aria-pressed="false">পরীক্ষা</button>
+    </div>
+    <select id="count" aria-label="প্রশ্নসংখ্যা">
+      <option value="10">১০ প্রশ্ন</option>
+      <option value="15" selected>১৫ প্রশ্ন</option>
+      <option value="25">২৫ প্রশ্ন</option>
+      <option value="50">৫০ প্রশ্ন</option>
+      <option value="all" id="opt-all">পূর্ণ অধ্যায় টেস্ট</option>
+    </select>
+    <button class="btn ghost" id="new">নতুন টেস্ট বানাও</button>
+  </div>
+  <div class="how" id="how"></div>
+</div>
+
+<div class="bar"><div class="wrap">
+  <span class="code" id="code"></span>
+  <span class="tally" id="tally"></span>
+  <span class="timer" id="timer" hidden></span>
+  <button class="btn" id="submit">ফলাফল দেখো</button>
+</div></div>
+
+<main class="wrap">
+  <section class="result" id="result" hidden></section>
+  <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
+</main>
+</section>
+<section id="v-past" class="wrap" hidden>
+  <p class="past-intro" id="past-intro"></p>
+  <div class="pf"><div class="jump" id="pf-uni" style="padding-block:4px"></div>
+  <select id="pf-year" aria-label="সাল"><option value="0">সব সাল</option><option value="2015">২০১৫–২০১৯</option><option value="2010">২০১০–২০১৪</option><option value="2005">২০০৫–২০০৯</option><option value="2000">২০০০–২০০৪</option></select></div>
+  <div class="code" id="pf-count" style="margin:10px 0"></div>
+  <div id="past-list" style="display:flex;flex-direction:column;gap:12px;padding-bottom:40px"></div>
+</section>
+<footer class="wrap">প্রোটোটাইপ: প্রশ্নগুলো নতুন করে লেখা খসড়া, প্রকাশের আগে বিষয় বিশেষজ্ঞের যাচাই প্রয়োজন। সংখ্যাগত প্রশ্নের উত্তর কোড দিয়ে হিসাব করা হয়।</footer>
+
+<script>
+/* ---------- helpers ---------- */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const nz=(a,b)=>{let x;do{x=ri(a,b)}while(x===0);return x};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const bn=s=>String(s).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const fm=x=>{const s=Number.isInteger(x)?String(x):String(Math.round(x*100)/100);return s.replace('-','−')};
+const p=x=>x<0?'('+fm(x)+')':fm(x);
+const mul=(a,b)=>p(a)+' × '+p(b);
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const frac=(n,d)=>{const g=gcd(n,d)||1;n/=g;d/=g;if(d<0){n=-n;d=-d}return d===1?fm(n):fm(n)+'/'+d};
+function surd(n){if(n===0)return'0';let k=1,m=n;for(let f=2;f*f<=m;f++){while(m%(f*f)===0){m/=f*f;k*=f}}return m===1?String(k):(k===1?'':k)+'√'+m}
+function terms(c,vars){const out=[];const u=['i','j','k'];c.forEach((a,k)=>{if(a===0)return;const ab=Math.abs(a);const co=ab===1?'':ab;const body=co+vars[k]+'['+u[k]+']';out.push(out.length===0?(a<0?'−':'')+body:(a<0?' − ':' + ')+body)});return out.join('')||'0'}
+const vs=c=>terms(c,['','','']);
+const render=s=>s.replace(/\{([^}]+)\}/g,'<span class="vec">$1</span>').replace(/\[([ijknA-Z])\]/g,(m,c)=>'<span class="hat">'+({i:'ı',j:'ȷ'}[c]||c)+'</span>');
+
+/* ---------- topics ---------- */
+const SV="স্কেলার ও ভেক্টর",TY="ভেক্টরের প্রকারভেদ",AD="ভেক্টর যোগ ও লব্ধি",RC="উপাংশ ও একক ভেক্টর",DOT="ডট গুণন",CR="ক্রস গুণন",RV="নদী-নৌকা ও আপেক্ষিক বেগ",CAL="ভেক্টর ক্যালকুলাস",DC="ডট ও ক্রস একসাথে";
+const TW={[DOT]:26,[CR]:22,[RV]:17,[AD]:17,[RC]:11,[DC]:4,[CAL]:2,[SV]:4,[TY]:4};
+
+/* ---------- question bank (content/physics-1/vectors/bank.json) ---------- */
+const BANK=[{"t":"স্কেলার ও ভেক্টর","q":"নিচের কোনটি ভেক্টর রাশি?","o":["কাজ","শক্তি","টর্ক","তাপমাত্রা"],"a":2,"e":"টর্ক {τ} = {r} × {F}, অর্থাৎ ক্রস গুণনের ফল, তাই এর মান ও দিক দুটোই আছে।","w":{"0":"কাজ W = {F}·{s}, ডট গুণনের ফল, তাই স্কেলার।","1":"শক্তির শুধু মান আছে, দিক নেই।","3":"তাপমাত্রার কোনো দিক নেই।"}},{"t":"স্কেলার ও ভেক্টর","q":"তড়িৎ প্রবাহের মান ও দিক দুটোই আছে, তবু এটি স্কেলার রাশি। কারণ—","o":["এর কোনো একক নেই","এটি ভেক্টর যোগের সূত্র মেনে চলে না","এর মান সবসময় ধনাত্মক","এটি সময়ের সাথে পরিবর্তিত হয়"],"a":1,"e":"ভেক্টর হতে হলে মান ও দিকের পাশাপাশি ভেক্টর যোগের সূত্র (ত্রিভুজ বা সামান্তরিক সূত্র) মানতে হয়। দুটি তারের প্রবাহ মিলিত হলে তারের মধ্যবর্তী কোণ বিবেচনা না করেই সরাসরি যোগ হয়।"},{"t":"স্কেলার ও ভেক্টর","q":"নিচের কোন জোড়ার দুটিই ভেক্টর রাশি?","o":["ভর ও ওজন","সরণ ও দূরত্ব","বেগ ও ত্বরণ","দ্রুতি ও বেগ"],"a":2,"e":"বেগ ও ত্বরণ দুটিরই মান ও দিক আছে। ভর, দূরত্ব ও দ্রুতি স্কেলার।","w":{"0":"ওজন ভেক্টর, কিন্তু ভর স্কেলার।","1":"সরণ ভেক্টর, কিন্তু দূরত্ব স্কেলার।","3":"বেগ ভেক্টর, কিন্তু দ্রুতি স্কেলার।"}},{"t":"ভেক্টরের প্রকারভেদ","q":"শূন্য ভেক্টরের দিক কেমন?","o":["ধনাত্মক x অক্ষ বরাবর","সবসময় উল্লম্ব","অনির্দিষ্ট","মূলবিন্দুর দিকে"],"a":2,"e":"শূন্য ভেক্টরের মান শূন্য, তাই এর কোনো নির্দিষ্ট দিক নেই।"},{"t":"ভেক্টরের প্রকারভেদ","q":"একক ভেক্টরের মান ও একক কী?","o":["মান 1, একক মিটার","মান 1, কোনো একক নেই","মান 0, কোনো একক নেই","মান মূল ভেক্টরের সমান"],"a":1,"e":"[A] = {A}/|{A}|। একই একক দিয়ে ভাগ করায় একক বাতিল হয়ে যায় এবং মান হয় 1। একক ভেক্টর শুধু দিক নির্দেশ করে।"},{"t":"ভেক্টরের প্রকারভেদ","q":"নিচের কোনটি অক্ষীয় (axial) ভেক্টর?","o":["রৈখিক বেগ","সরণ","কৌণিক বেগ","বল"],"a":2,"e":"ঘূর্ণন অক্ষ বরাবর ক্রিয়া করে এমন ভেক্টরকে অক্ষীয় ভেক্টর বলে, যেমন কৌণিক বেগ, কৌণিক ভরবেগ, টর্ক। বাকিগুলো পোলার ভেক্টর।"},{"t":"ভেক্টরের প্রকারভেদ","q":"দুটি ভেক্টরের মান সমান এবং দিক বিপরীত হলে তাদের বলা হয়—","o":["সমান ভেক্টর","বিপরীত ভেক্টর","একক ভেক্টর","সমতলীয় ভেক্টর"],"a":1,"e":"সমান মান ও বিপরীত দিক হলে বিপরীত ভেক্টর। এদের যোগফল শূন্য ভেক্টর।","w":{"0":"সমান ভেক্টরের মান ও দিক দুটোই এক।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"মূলবিন্দুর সাপেক্ষে P(2, 3, −1) বিন্দুর অবস্থান ভেক্টর কোনটি?","o":["2[i] + 3[j] + [k]","2[i] + 3[j] − [k]","−2[i] − 3[j] + [k]","2[i] − 3[j] − [k]"],"a":1,"e":"অবস্থান ভেক্টর {r} = x[i] + y[j] + z[k] = 2[i] + 3[j] − [k]।","w":{"0":"z স্থানাঙ্ক −1, চিহ্ন বাদ পড়েছে।","2":"এটি মূলবিন্দু থেকে P নয়, P থেকে মূলবিন্দুর দিকে।"}},{"t":"ভেক্টর যোগ ও লব্ধি","q":"দুটি ভেক্টরের লব্ধি সর্বোচ্চ হয় যখন তাদের মধ্যবর্তী কোণ—","o":["0°","90°","120°","180°"],"a":0,"e":"R = √(A² + B² + 2AB cosθ)। cosθ এর সর্বোচ্চ মান 1, যা θ = 0° তে হয়। তখন R = A + B।","w":{"3":"180° তে লব্ধি সর্বনিম্ন: |A − B|।"}},{"t":"ভেক্টর যোগ ও লব্ধি","q":"সমান মানের দুটি ভেক্টরের লব্ধির মানও একই হলে তাদের মধ্যবর্তী কোণ কত?","o":["60°","90°","120°","180°"],"a":2,"e":"P² = P² + P² + 2P² cosθ ⇒ cosθ = −1/2 ⇒ θ = 120°।","w":{"0":"60° তে লব্ধি হয় P√3।","1":"90° তে লব্ধি হয় P√2।","3":"180° তে লব্ধি শূন্য।"}},{"t":"ভেক্টর যোগ ও লব্ধি","q":"3 N ও 4 N মানের দুটি বলের লব্ধি নিচের কোনটি হতে পারে না?","o":["1 N","5 N","7 N","8 N"],"a":3,"e":"লব্ধি |A − B| থেকে A + B এর মধ্যে থাকে, অর্থাৎ 1 N থেকে 7 N। তাই 8 N সম্ভব নয়।","w":{"0":"1 N সম্ভব: বল দুটি বিপরীতমুখী হলে।","1":"5 N সম্ভব: বল দুটি পরস্পর লম্ব হলে।","2":"7 N সম্ভব: বল দুটি একমুখী হলে।"}},{"t":"ভেক্টর যোগ ও লব্ধি","q":"সামান্তরিক সূত্রে দুটি ভেক্টরের লব্ধি নির্দেশ করে—","o":["সামান্তরিকের একটি বাহু","সাধারণ বিন্দু থেকে অঙ্কিত কর্ণ","অপর কর্ণ","সামান্তরিকের ক্ষেত্রফল"],"a":1,"e":"দুটি ভেক্টরকে সামান্তরিকের সন্নিহিত বাহু ধরলে তাদের সাধারণ বিন্দু থেকে অঙ্কিত কর্ণই লব্ধি।","w":{"2":"অপর কর্ণ দেয় ভেক্টর দুটির বিয়োগফল।","3":"ক্ষেত্রফল দেয় ক্রস গুণনের মান, লব্ধি নয়।"}},{"t":"ভেক্টর যোগ ও লব্ধি","q":"{A} − {B} কে কীভাবে লেখা যায়?","o":["{A} + {B}","{A} + (−{B})","{B} − {A}","{A} × {B}"],"a":1,"e":"ভেক্টর বিয়োগ মানে বিপরীত ভেক্টর যোগ করা: {A} − {B} = {A} + (−{B})।","w":{"2":"{B} − {A} হলো −({A} − {B}), দিক উল্টো।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"একটি ভেক্টরকে কতগুলো উপাংশে বিভাজন করা যায়?","o":["2টি","3টি","অসংখ্য","4টি"],"a":2,"e":"যেকোনো দিক বরাবর উপাংশ নেওয়া যায়, তাই অসংখ্য উপাংশে বিভাজন সম্ভব। ত্রিমাত্রিক স্থানে পরস্পর লম্ব আয়তাকার উপাংশ 3টি।","w":{"1":"3টি হলো ত্রিমাত্রিক আয়তাকার উপাংশের সংখ্যা, মোট সম্ভাব্য উপাংশ নয়।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"কোনো ভেক্টর {A} এর নিজের দিকের সাথে লম্ব দিকে উপাংশ কত?","o":["A","A/2","0","A√2"],"a":2,"e":"উপাংশ = A cosθ। θ = 90° হলে A cos90° = 0।"},{"t":"ডট গুণন","q":"দুটি অশূন্য ভেক্টরের {A}·{B} = 0 হলে তারা—","o":["পরস্পর সমান্তরাল","পরস্পর লম্ব","বিপরীতমুখী","সমান"],"a":1,"e":"{A}·{B} = AB cosθ = 0 ⇒ cosθ = 0 ⇒ θ = 90°।","w":{"0":"সমান্তরাল হলে ক্রস গুণন শূন্য হয়, ডট গুণন নয়।"}},{"t":"ডট গুণন","q":"[k]·[k] এর মান কত?","o":["0","1","[k]","−1"],"a":1,"e":"একই একক ভেক্টরের মধ্যে কোণ 0°, তাই [k]·[k] = 1 × 1 × cos0° = 1।","w":{"0":"0 হয় ভিন্ন একক ভেক্টরের ডট গুণনে, যেমন [i]·[j]।","2":"ডট গুণনের ফল স্কেলার, ভেক্টর নয়।"}},{"t":"ডট গুণন","q":"{B} এর দিকে {A} এর অভিক্ষেপ (projection) কোনটি?","o":["{A}·{B}","({A}·{B})/B","({A}·{B})/A","({A}·{B})/B²"],"a":1,"e":"অভিক্ষেপ = A cosθ = ({A}·{B})/B।","w":{"2":"এটি {A} এর দিকে {B} এর অভিক্ষেপ।"}},{"t":"ডট গুণন","q":"কাজ W কে ভেক্টর আকারে লেখা হয়—","o":["W = {F} × {s}","W = {F}·{s}","W = {s} × {F}","W = F/s"],"a":1,"e":"কাজ স্কেলার রাশি, তাই এটি বল ও সরণের ডট গুণন।","w":{"0":"ক্রস গুণনের ফল ভেক্টর, কিন্তু কাজ স্কেলার।"}},{"t":"ক্রস গুণন","q":"[j] × [i] = ?","o":["[k]","−[k]","0","1"],"a":1,"e":"চক্রক্রম [i] → [j] → [k] → [i]। [i] × [j] = [k], তাই উল্টো ক্রমে [j] × [i] = −[k]।","w":{"0":"[k] হয় [i] × [j] এ; ক্রম উল্টালে চিহ্ন বদলায়।","2":"0 হয় একই একক ভেক্টরের ক্রস গুণনে, যেমন [i] × [i]।"}},{"t":"ক্রস গুণন","q":"{A} × {A} = ?","o":["A²","1","শূন্য ভেক্টর","2{A}"],"a":2,"e":"একই ভেক্টরের মধ্যে কোণ 0° এবং sin0° = 0, তাই ফল শূন্য ভেক্টর।","w":{"0":"A² হয় {A}·{A} এ, ক্রস গুণনে নয়।"}},{"t":"ক্রস গুণন","q":"দুটি অশূন্য ভেক্টরের {A} × {B} = 0 হলে তারা—","o":["পরস্পর লম্ব","সমান্তরাল বা বিপরীত সমান্তরাল","45° কোণে আনত","সমতলীয় নয়"],"a":1,"e":"|{A} × {B}| = AB sinθ = 0 ⇒ θ = 0° বা 180°।","w":{"0":"লম্ব হলে ডট গুণন শূন্য হয়।"}},{"t":"ক্রস গুণন","q":"|{A} × {B}| জ্যামিতিকভাবে কী নির্দেশ করে?","o":["{A} ও {B} দ্বারা গঠিত সামান্তরিকের ক্ষেত্রফল","{A} ও {B} দ্বারা গঠিত ত্রিভুজের ক্ষেত্রফল","লব্ধির মান","অভিক্ষেপ"],"a":0,"e":"|{A} × {B}| = AB sinθ, যা সন্নিহিত বাহু A ও B বিশিষ্ট সামান্তরিকের ক্ষেত্রফল।","w":{"1":"ত্রিভুজের ক্ষেত্রফল এর অর্ধেক: ½|{A} × {B}|।"}},{"t":"ক্রস গুণন","q":"নিচের কোনটি সঠিক?","o":["{A} × {B} = {B} × {A}","{A} × {B} = −{B} × {A}","{A}·{B} = −{B}·{A}","{A} × {B} = {A}·{B}"],"a":1,"e":"ক্রস গুণন বিনিময় নিয়ম মানে না; ক্রম উল্টালে দিক উল্টে যায়। ডট গুণন বিনিময় নিয়ম মানে।"},{"t":"ক্রস গুণন","q":"টর্কের সঠিক ভেক্টর রূপ কোনটি?","o":["τ = {r}·{F}","{τ} = {r} × {F}","{τ} = {F} × {r}","τ = rF"],"a":1,"e":"টর্ক = অবস্থান ভেক্টর × বল, এই ক্রমে।","w":{"0":"ডট গুণন স্কেলার দেয়, কিন্তু টর্ক ভেক্টর।","2":"ক্রম উল্টালে টর্কের দিক বিপরীত হয়।"}},{"t":"ক্রস গুণন","q":"তিনটি ভেক্টর সমতলীয় হলে {A}·({B} × {C}) এর মান—","o":["1","শূন্য","ABC","সর্বোচ্চ"],"a":1,"e":"স্কেলার ত্রিগুণন তিনটি ভেক্টর দিয়ে গঠিত সামান্তরিক ষড়তলকের আয়তন দেয়। তিনটি ভেক্টর এক সমতলে থাকলে আয়তন শূন্য।"},{"t":"ভেক্টর ক্যালকুলাস","q":"{r} = x[i] + y[j] + z[k] হলে ∇·{r} = ?","o":["0","1","3","{r}"],"a":2,"e":"∇·{r} = ∂x/∂x + ∂y/∂y + ∂z/∂z = 1 + 1 + 1 = 3।","w":{"3":"ডাইভারজেন্সের ফল স্কেলার, ভেক্টর নয়।"}},{"t":"ভেক্টর ক্যালকুলাস","q":"কোনো ভেক্টর ক্ষেত্রের ডাইভারজেন্স শূন্য হলে ক্ষেত্রটিকে বলে—","o":["অঘূর্ণনশীল","সলিনয়ডাল","সংরক্ষণশীল","সুষম"],"a":1,"e":"∇·{V} = 0 হলে ক্ষেত্রটি সলিনয়ডাল, অর্থাৎ এর কোনো উৎস বা শোষক নেই।","w":{"0":"অঘূর্ণনশীল হয় কার্ল শূন্য হলে।","2":"সংরক্ষণশীল হয় কার্ল শূন্য হলে।"}},{"t":"ভেক্টর ক্যালকুলাস","q":"কোনো কণার অবস্থান ভেক্টর {r}(t) কে সময়ের সাপেক্ষে একবার অন্তরীকরণ করলে পাওয়া যায়—","o":["সরণ","বেগ","ত্বরণ","ভরবেগ"],"a":1,"e":"{v} = d{r}/dt। আবার অন্তরীকরণ করলে ত্বরণ: {a} = d{v}/dt = d²{r}/dt²।","w":{"2":"ত্বরণ পেতে দুবার অন্তরীকরণ করতে হয়।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"লন রোলার ঠেলার চেয়ে টানা সহজ, কারণ টানার সময়—","o":["বলের অনুভূমিক উপাংশ বেড়ে যায়","বলের উল্লম্ব উপাংশ ওপরের দিকে ক্রিয়া করে, ফলে আপাত ওজন ও ঘর্ষণ কমে","রোলারের ভর কমে যায়","ঘর্ষণ বল শূন্য হয়ে যায়"],"a":1,"e":"টানলে উল্লম্ব উপাংশ F sinθ ওপরের দিকে, তাই অভিলম্ব প্রতিক্রিয়া N = mg − F sinθ। ঠেললে উপাংশটি নিচের দিকে, N = mg + F sinθ। N কম হলে ঘর্ষণও কম।","w":{"0":"টানা ও ঠেলা দুই ক্ষেত্রেই অনুভূমিক উপাংশ F cosθ, তাই পার্থক্য এখানে নয়।","2":"ভর বদলায় না; বদলায় অভিলম্ব প্রতিক্রিয়া (আপাত ওজন)।","3":"ঘর্ষণ কমে, কিন্তু শূন্য হয় না।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"m ভরের লন রোলারকে অনুভূমিকের সাথে θ কোণে F বল দিয়ে ঠেলা হলে ভূমির অভিলম্ব প্রতিক্রিয়া—","o":["mg − F sinθ","mg + F sinθ","mg + F cosθ","mg"],"a":1,"e":"ঠেলার সময় বলের উল্লম্ব উপাংশ F sinθ নিচের দিকে, তাই এটি ওজনের সাথে যোগ হয়: N = mg + F sinθ।","w":{"0":"এটি টানার সময়ের মান।","2":"উল্লম্ব উপাংশ F sinθ, F cosθ নয়; θ মাপা হয়েছে অনুভূমিক থেকে।","3":"বলের উল্লম্ব উপাংশ বাদ পড়েছে।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"কোনো ভেক্টর x, y ও z অক্ষের সাথে যথাক্রমে α, β ও γ কোণ উৎপন্ন করলে cos²α + cos²β + cos²γ = ?","o":["0","1","2","3"],"a":1,"e":"দিক কোসাইন l = A<sub>x</sub>/A, m = A<sub>y</sub>/A, n = A<sub>z</sub>/A। তাই l² + m² + n² = (A<sub>x</sub>² + A<sub>y</sub>² + A<sub>z</sub>²)/A² = 1।","w":{"2":"2 হয় sin²α + sin²β + sin²γ এর যোগফল।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"একটি ভেক্টর x ও y উভয় অক্ষের সাথে 60° কোণ উৎপন্ন করে। z অক্ষের সাথে এর সূক্ষ্মকোণ কত?","o":["30°","45°","60°","90°"],"a":1,"e":"cos²γ = 1 − cos²60° − cos²60° = 1 − ¼ − ¼ = ½ ⇒ cosγ = 1/√2 ⇒ γ = 45°।","w":{"2":"দিক কোণগুলোর যোগফল 180° হয় না; cos²γ হিসাব করতে হয়।","3":"cos²60° + cos²60° = ½, 1 নয়; তাই cos²γ শূন্য নয়।"}},{"t":"উপাংশ ও একক ভেক্টর","q":"[i] + [j] + [k] ভেক্টরটি x অক্ষের সাথে কত কোণ উৎপন্ন করে?","o":["45°","60°","cos⁻¹(1/√3)","cos⁻¹(1/3)"],"a":2,"e":"মান = √(1 + 1 + 1) = √3, তাই cosα = 1/√3 ⇒ α = cos⁻¹(1/√3) ≈ 54.7°।","w":{"3":"মানের বর্গ দিয়ে ভাগ করা হয়েছে; ভাগ করতে হয় মান √3 দিয়ে।"}},{"t":"নদী-নৌকা ও আপেক্ষিক বেগ","q":"বাতাস পূর্ব দিকে বইছে, ফলে বৃষ্টির ফোঁটা পূর্ব দিকে অনুভূমিক বেগ পেয়েছে। একজন লোক বাতাসের সমান বেগে পূর্ব দিকে হাঁটলে ছাতা ধরতে হবে—","o":["খাড়া উপরে","পূর্ব দিকে হেলিয়ে","পশ্চিম দিকে হেলিয়ে","অনুভূমিকভাবে"],"a":0,"e":"লোকের সাপেক্ষে বৃষ্টির অনুভূমিক আপেক্ষিক বেগ = বৃষ্টির অনুভূমিক বেগ − লোকের বেগ = 0। তাই লোকের কাছে বৃষ্টি খাড়া পড়ছে বলে মনে হয়।","w":{"1":"বৃষ্টি যেদিক থেকে আসে ছাতা সেদিকে হেলাতে হয়; এখানে আপেক্ষিক অনুভূমিক বেগই শূন্য।","2":"লোক দাঁড়িয়ে থাকলে এটি সঠিক হতো; কিন্তু সমান বেগে হাঁটায় আপেক্ষিক অনুভূমিক বেগ শূন্য।"}},{"t":"নদী-নৌকা ও আপেক্ষিক বেগ","q":"স্থির বাতাসে বৃষ্টি খাড়া পড়ছে। চলন্ত গাড়ির পাশের জানালায় বৃষ্টির দাগ কেমন দেখাবে?","o":["খাড়া উল্লম্ব রেখা","অনুভূমিক রেখা","তির্যক রেখা, নিচের দিকে গাড়ির পেছনের দিকে হেলানো","তির্যক রেখা, নিচের দিকে গাড়ির সামনের দিকে হেলানো"],"a":2,"e":"গাড়ির সাপেক্ষে বৃষ্টির আপেক্ষিক বেগ = বৃষ্টির বেগ − গাড়ির বেগ। এর অনুভূমিক অংশ গাড়ির চলার বিপরীত দিকে, তাই ফোঁটা নামতে নামতে পেছনে সরে। উল্লম্বের সাথে কোণ: tanθ = গাড়ির বেগ / বৃষ্টির বেগ।","w":{"0":"গাড়ি থেমে থাকলে দাগ খাড়া হতো।","1":"অনুভূমিক হতো কেবল বৃষ্টির উল্লম্ব বেগ শূন্য হলে।","3":"আপেক্ষিক বেগের অনুভূমিক অংশ গাড়ির বেগের বিপরীত, তাই দাগ পেছনে হেলে।"}},{"t":"ক্রস গুণন","q":"{A} = A<sub>x</sub>[i] + A<sub>y</sub>[j] + A<sub>z</sub>[k] ও {B} = B<sub>x</sub>[i] + B<sub>y</sub>[j] + B<sub>z</sub>[k] পরস্পর সমান্তরাল হওয়ার শর্ত কোনটি?","o":["A<sub>x</sub>B<sub>x</sub> + A<sub>y</sub>B<sub>y</sub> + A<sub>z</sub>B<sub>z</sub> = 0","A<sub>x</sub>/B<sub>x</sub> = A<sub>y</sub>/B<sub>y</sub> = A<sub>z</sub>/B<sub>z</sub>","A<sub>x</sub> + A<sub>y</sub> + A<sub>z</sub> = B<sub>x</sub> + B<sub>y</sub> + B<sub>z</sub>","|{A}| = |{B}|"],"a":1,"e":"সমান্তরাল হলে {B} = λ{A}, অর্থাৎ প্রতিটি উপাংশের অনুপাত একই। এটি {A} × {B} = 0 এর সমতুল্য।","w":{"0":"এটি লম্ব হওয়ার শর্ত ({A}·{B} = 0)।","3":"মান সমান হলেও দিক আলাদা হতে পারে।"}},{"t":"ডট গুণন","q":"বল প্রয়োগে একটি বস্তুর সরণ হলো, তবু কাজ শূন্য। এর মানে—","o":["বল ও সরণ একই দিকে","বল ও সরণ পরস্পর লম্ব","বল ও সরণ বিপরীতমুখী","বলের মান খুব কম"],"a":1,"e":"W = {F}·{s} = Fs cosθ। F ও s অশূন্য হলে W = 0 কেবল cosθ = 0, অর্থাৎ θ = 90° হলে। যেমন বৃত্তাকার পথে কেন্দ্রমুখী বল কোনো কাজ করে না।","w":{"0":"একই দিকে হলে কাজ সর্বোচ্চ, Fs।","2":"বিপরীতমুখী হলে কাজ ঋণাত্মক, −Fs, শূন্য নয়।","3":"বল যত কমই হোক, লম্ব না হলে কিছু কাজ হয়।"}},{"t":"ডট ও ক্রস একসাথে","q":"দুটি ভেক্টরের মধ্যবর্তী কোণ θ হলে |{A} × {B}| / ({A}·{B}) = ?","o":["sinθ","cosθ","tanθ","cotθ"],"a":2,"e":"|{A} × {B}| / ({A}·{B}) = AB sinθ / (AB cosθ) = tanθ।","w":{"3":"লব ও হর উল্টে গেছে: ক্রস গুণন লবে থাকলে tanθ।"}},{"t":"ডট ও ক্রস একসাথে","q":"দুটি ভেক্টরের ডট গুণন ও ক্রস গুণনের মান সমান হলে তাদের মধ্যবর্তী কোণ কত?","o":["0°","30°","45°","90°"],"a":2,"e":"AB cosθ = AB sinθ ⇒ tanθ = 1 ⇒ θ = 45°।","w":{"0":"0° তে ক্রস গুণন শূন্য, কিন্তু ডট গুণন সর্বোচ্চ।","3":"90° তে ডট গুণন শূন্য, কিন্তু ক্রস গুণন সর্বোচ্চ।"}},{"t":"ক্রস গুণন","q":"কোনো সামান্তরিকের দুটি কর্ণ {d₁} ও {d₂} হলে এর ক্ষেত্রফল—","o":["|{d₁} × {d₂}|","½|{d₁} × {d₂}|","{d₁}·{d₂}","2|{d₁} × {d₂}|"],"a":1,"e":"বাহু {A} ও {B} হলে {d₁} = {A} + {B}, {d₂} = {A} − {B}। তখন {d₁} × {d₂} = −2({A} × {B}), তাই ক্ষেত্রফল |{A} × {B}| = ½|{d₁} × {d₂}|।","w":{"0":"এটি বাহু দেওয়া থাকলে খাটে; কর্ণ দিয়ে হিসাবে ½ লাগে।","2":"ক্ষেত্রফল আসে ক্রস গুণন থেকে, ডট গুণন থেকে নয়।","3":"কর্ণের ক্রস গুণন বাহুর ক্রস গুণনের দ্বিগুণ, তাই ক্ষেত্রফলে ½ লাগে, 2 নয়।"}},{"t":"ক্রস গুণন","q":"{A} × ({B} × {C}) এর সমান কোনটি?","o":["{B}({A}·{C}) − {C}({A}·{B})","{C}({A}·{B}) − {B}({A}·{C})","({A} × {B}) × {C}","{A}({B}·{C}) − {B}({A}·{C})"],"a":0,"e":"ভেক্টর ত্রিগুণনের সূত্র “BAC − CAB”: {A} × ({B} × {C}) = {B}({A}·{C}) − {C}({A}·{B})।","w":{"1":"চিহ্ন উল্টে গেছে; প্রথমে {B}, পরে {C}।","2":"ক্রস গুণন সংযোগ নিয়ম মানে না, তাই বন্ধনী সরানো যায় না।"}},{"t":"ক্রস গুণন","q":"{A} × ({B} × {C}) ভেক্টরটি কোন তলে থাকে?","o":["{A} ও {B} এর তলে","{B} ও {C} এর তলে","{A} ও {C} এর তলে","{B} ও {C} এর তলের লম্ব বরাবর"],"a":1,"e":"BAC − CAB সূত্রে ফলটি {B} ও {C} এর রৈখিক সমাবেশ: {B}({A}·{C}) − {C}({A}·{B})। তাই এটি {B} ও {C} এর তলেই থাকে।","w":{"3":"{B} × {C} নিজে ঐ তলের লম্ব; কিন্তু {A} এর সাথে আবার ক্রস গুণন করলে ফল তলে ফিরে আসে।"}},{"t":"ক্রস গুণন","q":"নির্ণায়ক পদ্ধতিতে {A} × {B} বের করার সময় কোন পদের আগে ঋণাত্মক চিহ্ন বসে?","o":["[i]","[j]","[k]","কোনোটিতে নয়"],"a":1,"e":"{A} × {B} = (A<sub>y</sub>B<sub>z</sub> − A<sub>z</sub>B<sub>y</sub>)[i] − (A<sub>x</sub>B<sub>z</sub> − A<sub>z</sub>B<sub>x</sub>)[j] + (A<sub>x</sub>B<sub>y</sub> − A<sub>y</sub>B<sub>x</sub>)[k]। মাঝের [j] পদের চিহ্ন ঋণাত্মক; এখানেই সবচেয়ে বেশি ভুল হয়।"},{"t":"নদী-নৌকা ও আপেক্ষিক বেগ","q":"স্রোতযুক্ত নদী সবচেয়ে কম সময়ে পার হতে নৌকাকে স্রোতের সাথে কত কোণে চালাতে হবে?","o":["0°","60°","90°","120°"],"a":2,"e":"স্রোতের সাথে 90° কোণে চালালে আড়াআড়ি বেগ সর্বোচ্চ হয়, তাই সময় সবচেয়ে কম। তবে নৌকা স্রোতের দিকে কিছুটা সরে যাবে।","w":{"3":"স্রোতের বিপরীতে হেলিয়ে চালালে সোজা অপর পাড়ে পৌঁছানো যায় (কম দূরত্ব), কিন্তু সময় বেশি লাগে।"}},{"t":"নদী-নৌকা ও আপেক্ষিক বেগ","q":"নৌকা ঠিক বিপরীত তীরের বিন্দুতে পৌঁছাতে পারবে কেবল তখনই যখন—","o":["নৌকার বেগ > স্রোতের বেগ","নৌকার বেগ = স্রোতের বেগ","নৌকার বেগ < স্রোতের বেগ","নৌকা স্রোতের সাথে লম্বভাবে চলে"],"a":0,"e":"নৌকাকে স্রোতের বিপরীতে এমনভাবে হেলাতে হয় যেন তার বেগের স্রোত-বরাবর উপাংশ স্রোতের বেগের সমান হয়। এটি সম্ভব কেবল নৌকার বেগ স্রোতের বেগের চেয়ে বেশি হলে।","w":{"1":"বেগ সমান হলে সম্পূর্ণ বেগ স্রোত ঠেকাতেই লেগে যায়, আড়াআড়ি বেগ থাকে শূন্য।","3":"লম্বভাবে চালালে নৌকা ভাটির দিকে সরে যায়।"}},{"t":"নদী-নৌকা ও আপেক্ষিক বেগ","q":"বৃষ্টি খাড়াভাবে পড়ছে। একজন লোক অনুভূমিকভাবে সামনে হাঁটলে বৃষ্টি থেকে বাঁচতে ছাতা ধরতে হবে—","o":["খাড়া উপরে","সামনের দিকে হেলিয়ে","পেছনের দিকে হেলিয়ে","অনুভূমিকভাবে"],"a":1,"e":"লোকের সাপেক্ষে বৃষ্টির আপেক্ষিক বেগ = বৃষ্টির বেগ − লোকের বেগ, যা সামনের দিক থেকে তির্যকভাবে আসে। তাই ছাতা সামনে হেলাতে হয়।"},{"t":"ভেক্টর যোগ ও লব্ধি","q":"ABC ত্রিভুজের বাহুগুলোকে ক্রমানুসারে ভেক্টর ধরলে {AB} + {BC} + {CA} = ?","o":["2{AC}","{AC}","শূন্য ভেক্টর","{AB}"],"a":2,"e":"ত্রিভুজ সূত্রে {AB} + {BC} = {AC}। এর সাথে {CA} = −{AC} যোগ করলে ফল শূন্য।","w":{"1":"{AC} হলো শুধু {AB} + {BC}; {CA} যোগ করলে সেটি বাতিল হয়।"}},{"t":"ডট গুণন","q":"সমান মানের দুটি ভেক্টর {A} ও {B} এর যোগফল ({A} + {B}) ও বিয়োগফল ({A} − {B}) এর মধ্যবর্তী কোণ কত?","o":["0°","45°","90°","180°"],"a":2,"e":"({A} + {B})·({A} − {B}) = A² − B² = 0, কারণ A = B। ডট গুণন শূন্য, তাই কোণ 90°।","w":{"0":"যোগফল ও বিয়োগফল একই দিকে নয়; তাদের ডট গুণন A² − B²।"}},{"t":"ক্রস গুণন","q":"{C} = {A} × {B} হলে {C} এর দিক—","o":["{A} এর দিকে","{B} এর দিকে","{A} ও {B} এর তলের লম্ব বরাবর, ডানহাতি স্ক্রু নিয়মে","{A} ও {B} এর মধ্যবর্তী কোণের সমদ্বিখণ্ডক বরাবর"],"a":2,"e":"ক্রস গুণনের ফল সবসময় দুটি ভেক্টরের ওপরই লম্ব; {A} থেকে {B} এর দিকে ঘোরালে ডানহাতি স্ক্রু যেদিকে এগোয়, {C} সেদিকে।","w":{"3":"সমদ্বিখণ্ডক বরাবর থাকে সমান মানের দুটি ভেক্টরের লব্ধি, ক্রস গুণন নয়।"}},{"t":"ক্রস গুণন","q":"{a} + {b} + {c} = 0 এবং |{a}| = 4, |{b}| = 3, |{c}| = 5 হলে |{c} × ({a} × {b})| = ?","o":["12","20","60","0"],"a":2,"e":"তিনটি ভেক্টর একটি ত্রিভুজ গঠন করে; 4² + 3² = 5², তাই {a} ⊥ {b} এবং |{a} × {b}| = 4 × 3 = 12। {a} × {b} ত্রিভুজের তলের লম্ব আর {c} তলেই আছে, তাই এরা লম্ব: |{c} × ({a} × {b})| = 5 × 12 = 60।","w":{"0":"এটি শুধু |{a} × {b}|; {c} এর সাথে আরেকবার ক্রস গুণন বাকি।","3":"{c} ও {a} × {b} সমান্তরাল নয়, লম্ব; তাই ফল শূন্য নয়।"}}];
+
+/* Numerical templates for this chapter.
+ * Each template is a function that returns one question with fresh numbers:
+ *   {t: TOPIC, q: question, c: correct answer, d: [[wrong answer, why a student picks it], ...], e: worked explanation}
+ * The engine checks that the correct answer and the wrong answers are all different.
+ * Topic names (DOT, CR, ...) come from chapter.json. Helpers (ri, nz, pick, vs, surd, frac, fm, p, mul, terms) come from the engine.
+ * TI maps a short name to each template; past.json refers to templates by these names ("t:name").
+ */
+/* ---------- numerical templates: new numbers each time, answer computed in code ---------- */
+const TRI=[[3,4,0,5],[6,8,0,10],[5,12,0,13],[1,2,2,3],[2,3,6,7],[2,1,2,3],[4,4,2,6]];
+const sgn=v=>v.map(x=>x*(Math.random()<.5?-1:1));
+const RIV=[[5,3,4],[5,4,3],[10,6,8],[10,8,6],[13,5,12]];
+const dot3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross3=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const isZ=v=>v.every(x=>x===0);
+function sq(n){let k=1,m=n;for(let f=2;f*f<=m;f++){while(m%(f*f)===0){m/=f*f;k*=f}}return[k,m]}
+function hsurd(n){const[k,m]=sq(n);if(m===1)return frac(k,2);if(k%2===0)return surd(n/4);return(k===1?'':k)+'√'+m+'/2'}
+const PY=[[3,4,5],[6,8,10],[5,12,13],[4,3,5],[8,6,10],[12,5,13]];
+const DIRC=[[60,60,45],[45,45,90],[60,45,60],[45,60,60],[90,45,45],[90,60,30],[30,60,90],[60,90,30]];
+const rnz=()=>{let v;do{v=[ri(-2,2),ri(-2,2),ri(-2,2)]}while(isZ(v));return v};
+const TPL=[
+()=>{const A=ri(2,9),B=ri(2,9),th=pick([60,120]),s=th===60?1:-1,R2=A*A+B*B+s*A*B,W2=A*A+B*B-s*A*B;
+ return{t:AD,q:`দুটি বল ${A} N ও ${B} N পরস্পরের সাথে ${th}° কোণে ক্রিয়া করছে। তাদের লব্ধির মান কত?`,c:surd(R2)+' N',
+ d:[[surd(W2)+' N',`cos${th}° এর চিহ্ন ভুল হয়েছে: cos${th}° = ${s>0?'':'−'}1/2।`],[(A+B)+' N','কোণ বিবেচনা না করে সরাসরি যোগ করা হয়েছে। এটি শুধু θ = 0° হলে সঠিক।'],[surd(A*A+B*B)+' N','বল দুটিকে পরস্পর লম্ব (θ = 90°) ধরা হয়েছে।']],
+ e:`R = √(A² + B² + 2AB cosθ) = √(${A*A} + ${B*B} + 2 × ${A} × ${B} × cos${th}°) = √(${A*A} + ${B*B} ${s>0?'+':'−'} ${A*B}) = ${surd(R2)} N`}},
+()=>{const F=pick([4,5,6,8,10,12,20]),th=pick([60,120]);const all={a:F+'√3 N',b:F+' N',c:(2*F)+' N',d:F+'√2 N'};const ck=th===60?'a':'b',sk=th===60?'b':'a';
+ const notes={[sk]:'sin ও cos গুলিয়ে ফেলা হয়েছে: R = 2F cos(θ/2)।',c:'কোণ উপেক্ষা করে সরাসরি যোগ করা হয়েছে।',d:'বল দুটিকে পরস্পর লম্ব ধরা হয়েছে।'};
+ return{t:AD,q:`${F} N মানের দুটি সমান বল পরস্পরের সাথে ${th}° কোণে ক্রিয়া করছে। লব্ধির মান কত?`,c:all[ck],d:Object.keys(all).filter(k=>k!==ck).map(k=>[all[k],notes[k]]),
+ e:`সমান দুটি বলের লব্ধি R = 2F cos(θ/2) = 2 × ${F} × cos${th/2}° = ${all[ck]}`}},
+()=>{const a=nz(-6,6),b=nz(-6,6),c=nz(-6,6),n=a*a+b*b+c*c;
+ return{t:RC,q:`{A} = ${vs([a,b,c])} হলে |{A}| = ?`,c:surd(n),d:[[String(n),'বর্গমূল নিতে ভুলে গেছ।'],[surd(a*a+b*b),'z-উপাংশ বাদ পড়েছে।'],[fm(a+b+c),'উপাংশগুলো সরাসরি যোগ করা হয়েছে; মান পেতে উপাংশের বর্গের যোগফলের বর্গমূল নিতে হয়।']],
+ e:`|{A}| = √(A<sub>x</sub>² + A<sub>y</sub>² + A<sub>z</sub>²) = √(${a*a} + ${b*b} + ${c*c}) = √${n}${surd(n)!=='√'+n?' = '+surd(n):''}`}},
+()=>{const t=pick(TRI),v=sgn(t.slice(0,3)),m=t[3],s=v.reduce((x,y)=>x+Math.abs(y),0);const f=d=>`(${vs(v)})/${d}`;
+ return{t:RC,q:`{A} = ${vs(v)} এর দিক বরাবর একক ভেক্টর কোনটি?`,c:f(m),d:[[f(s),'উপাংশগুলোর যোগফল দিয়ে ভাগ করা হয়েছে; ভাগ করতে হয় ভেক্টরের মান দিয়ে।'],[vs(v),'এটি মূল ভেক্টর; একক ভেক্টর পেতে মান দিয়ে ভাগ করতে হয়।'],[f(m*m),'মানের বর্গ দিয়ে ভাগ করা হয়েছে।']],
+ e:`[A] = {A}/|{A}|। |{A}| = √(${v[0]**2} + ${v[1]**2} + ${v[2]**2}) = ${m}। তাই [A] = (${vs(v)})/${m}`}},
+()=>{const A=[nz(-5,5),nz(-5,5),nz(-5,5)],B=[nz(-5,5),nz(-5,5),nz(-5,5)],P=A.map((x,i)=>x*B[i]),c=P[0]+P[1]+P[2];let k=P.findIndex(x=>x<0);if(k<0)k=0;
+ return{t:DOT,q:`{A} = ${vs(A)} এবং {B} = ${vs(B)} হলে {A}·{B} = ?`,c:fm(c),d:[[fm(c-2*P[k]),`${['x','y','z'][k]}-উপাংশের গুণফলের চিহ্ন ভুল হয়েছে।`],[fm(Math.abs(P[0])+Math.abs(P[1])+Math.abs(P[2])),'ঋণাত্মক চিহ্নগুলো উপেক্ষা করা হয়েছে।'],[fm(A[0]*B[1]+A[1]*B[2]+A[2]*B[0]),'ভিন্ন অক্ষের উপাংশ গুণ করা হয়েছে; ডট গুণনে একই অক্ষের উপাংশ গুণ হয়।'],[vs(P),'ডট গুণনের ফল স্কেলার; উপাংশের গুণফলগুলো যোগ করতে হয়।']],
+ e:`{A}·{B} = A<sub>x</sub>B<sub>x</sub> + A<sub>y</sub>B<sub>y</sub> + A<sub>z</sub>B<sub>z</sub> = ${mul(A[0],B[0])} + ${mul(A[1],B[1])} + ${mul(A[2],B[2])} = ${p(P[0])} + ${p(P[1])} + ${p(P[2])} = ${fm(c)}`}},
+()=>{let a1,a2,b1,b2,b3,s;do{a1=nz(-5,5);a2=nz(-5,5);b1=nz(-5,5);b2=nz(-5,5);b3=pick([2,3]);s=a1*b1+a2*b2}while(s===0||s%b3!==0);const m=-s/b3;
+ return{t:DOT,q:`{A} = ${vs([a1,a2,0])} + m[k] এবং {B} = ${vs([b1,b2,b3])} পরস্পর লম্ব হলে m এর মান কত?`,c:fm(m),d:[[fm(-m),'সমীকরণ সমাধানে চিহ্ন ভুল হয়েছে।'],[fm(-s),`${b3} দিয়ে ভাগ করতে ভুলে গেছ।`],[fm(-s*b3),`${b3} দিয়ে ভাগের বদলে গুণ করা হয়েছে।`],[fm(s),'চিহ্ন ভুল এবং ভাগও বাদ পড়েছে।']],
+ e:`লম্ব হলে {A}·{B} = 0 ⇒ ${mul(a1,b1)} + ${mul(a2,b2)} + ${b3}m = 0 ⇒ ${fm(s)} + ${b3}m = 0 ⇒ m = ${fm(m)}`}},
+()=>{let a1,a2,b1,b2,ar;do{a1=ri(1,6);a2=ri(1,6);b1=ri(1,6);b2=ri(1,6);ar=Math.abs(a1*b2-a2*b1)}while(ar===0);const u=' বর্গ একক';
+ return{t:CR,q:`{A} = ${vs([a1,a2,0])} এবং {B} = ${vs([b1,b2,0])} দ্বারা গঠিত সামান্তরিকের ক্ষেত্রফল কত?`,c:ar+u,d:[[fm(ar/2)+u,'এটি ত্রিভুজের ক্ষেত্রফল; সামান্তরিকের জন্য ½ লাগে না।'],[fm(a1*b1+a2*b2)+u,'ডট গুণন করা হয়েছে; ক্ষেত্রফল দেয় ক্রস গুণনের মান।'],[fm(a1*b2+a2*b1)+u,'ক্রস গুণনে বিয়োগের বদলে যোগ করা হয়েছে।']],
+ e:`{A} × {B} = (${a1} × ${b2} − ${a2} × ${b1})[k] = ${fm(a1*b2-a2*b1)}[k]। ক্ষেত্রফল = |{A} × {B}| = ${ar}${u}`}},
+()=>{const[v,u,w]=pick(RIV),d=v*w*ri(2,4);
+ return{t:RV,q:`${d} m প্রশস্ত একটি নদীতে স্রোতের বেগ ${u} m/s। স্থির পানিতে ${v} m/s বেগের একটি নৌকা সবচেয়ে কম সময়ে নদী পার হতে কত সময় নেবে?`,c:fm(d/v)+' s',
+ d:[[fm(d/w)+' s','এটি সোজা অপর পাড়ে (ন্যূনতম দূরত্বে) যেতে লাগা সময়, ন্যূনতম সময় নয়।'],[fm(d/(v+u))+' s','স্রোতের বেগ আড়াআড়ি বেগের সাথে যোগ হয় না; স্রোত তীরের সমান্তরালে।'],[fm(d/u)+' s','স্রোতের বেগ দিয়ে ভাগ করা হয়েছে।']],
+ e:`ন্যূনতম সময়ের জন্য নৌকা স্রোতের সাথে লম্বভাবে চালাতে হয়। তখন আড়াআড়ি বেগ = ${v} m/s, তাই t = d/v = ${d}/${v} = ${fm(d/v)} s। স্রোত শুধু নৌকাকে ভাটির দিকে সরায়, সময় বদলায় না।`}},
+()=>{const[v,u,w]=pick(RIV),d=v*w*ri(2,4),x=u*d/v;
+ return{t:RV,q:`${d} m প্রশস্ত নদীতে স্রোতের বেগ ${u} m/s। স্থির পানিতে ${v} m/s বেগের নৌকা সবচেয়ে কম সময়ে পার হলে অপর তীরে ঠিক বিপরীত বিন্দু থেকে কত দূরে পৌঁছাবে?`,c:fm(x)+' m',
+ d:[['0 m','ন্যূনতম সময়ে পার হলে নৌকা অবশ্যই ভাটিতে সরে যায়। শূন্য সরণ হয় কেবল স্রোতের বিপরীতে হেলিয়ে চালালে।'],[fm(v*d/u)+' m','বেগ দুটির অনুপাত উল্টে গেছে।'],[fm(u*d/w)+' m',`সময় হিসাব করতে √(v² − u²) = ${w} ব্যবহার করা হয়েছে, যা অন্য পরিস্থিতির জন্য।`]],
+ e:`t = d/v = ${d}/${v} = ${fm(d/v)} s। ভাটিতে সরণ x = u × t = ${u} × ${fm(d/v)} = ${fm(x)} m`}},
+()=>{const[v,u,w]=pick(RIV),d=v*w*ri(2,4);
+ return{t:RV,q:`${d} m প্রশস্ত নদীতে স্রোতের বেগ ${u} m/s। স্থির পানিতে ${v} m/s বেগের নৌকা ঠিক বিপরীত বিন্দুতে পৌঁছাতে চাইলে নদী পার হতে কত সময় লাগবে?`,c:fm(d/w)+' s',
+ d:[[fm(d/v)+' s','এটি ন্যূনতম সময়ের উত্তর; সোজা পার হতে নৌকাকে হেলাতে হয়, তাই আড়াআড়ি বেগ কমে যায়।'],[fm(d/(v-u))+' s','বেগ সরাসরি বিয়োগ করা হয়েছে, কিন্তু উপাংশগুলো পরস্পর লম্ব।'],[fm(d/Math.sqrt(v*v+u*u))+' s','বর্গমূলের ভেতরে বিয়োগের বদলে যোগ করা হয়েছে।']],
+ e:`কার্যকর আড়াআড়ি বেগ = √(v² − u²) = √(${v*v} − ${u*u}) = ${w} m/s। t = ${d}/${w} = ${fm(d/w)} s`}},
+()=>{const a=nz(-4,4),b=nz(-5,5),c=nz(-5,5),x0=nz(-3,3),y0=ri(-3,3),z0=ri(-3,3),ans=2*a*x0+b+c;
+ return{t:CAL,q:`{V} = ${terms([a,b,c],['x²','y','z'])} হলে (${fm(x0)}, ${fm(y0)}, ${fm(z0)}) বিন্দুতে ∇·{V} এর মান কত?`,c:fm(ans),
+ d:[[fm(a*x0*x0+b+c),'x² কে x এর সাপেক্ষে অন্তরীকরণ করা হয়নি।'],[fm(2*a+b+c),'অন্তরীকরণের পর x এর মান বসানো হয়নি।'],[fm(a+b+c),'শুধু সহগগুলো যোগ করা হয়েছে।']],
+ e:`∇·{V} = ∂(${fm(a)}x²)/∂x + ∂(${fm(b)}y)/∂y + ∂(${fm(c)}z)/∂z = ${fm(2*a)}x + ${p(b)} + ${p(c)}। x = ${fm(x0)} বসিয়ে = ${fm(ans)}`}},
+()=>{let A,B,m,dot;do{const t=pick(TRI);B=sgn(t.slice(0,3));m=t[3];A=[nz(-4,4),nz(-4,4),nz(-4,4)];dot=A[0]*B[0]+A[1]*B[1]+A[2]*B[2]}while(dot===0);const s=B.reduce((x,y)=>x+Math.abs(y),0);
+ return{t:DOT,q:`{B} = ${vs(B)} এর দিক বরাবর {A} = ${vs(A)} এর অভিক্ষেপ কত?`,c:frac(dot,m),
+ d:[[fm(dot),'{B} এর মান দিয়ে ভাগ করা হয়নি।'],[frac(dot,m*m),'মানের বর্গ দিয়ে ভাগ করা হয়েছে।'],[frac(dot,s),'উপাংশের যোগফল দিয়ে ভাগ করা হয়েছে; ভাগ করতে হয় |{B}| দিয়ে।']],
+ e:`অভিক্ষেপ = ({A}·{B})/|{B}|। {A}·{B} = ${fm(dot)}, |{B}| = ${m}। তাই অভিক্ষেপ = ${fm(dot)}/${m} = ${frac(dot,m)}`}},
+/* lawn roller: pulling vs pushing */
+()=>{const m=pick([10,15,20,25,30,40,50]),F=pick([20,40,50,60,80,100]),pull=Math.random()<.5,mg=m*9.8,up=F/2,c=pull?mg-up:mg+up,cs=F*Math.sqrt(3)/2;
+ return{t:RC,q:`${m} kg ভরের একটি লন রোলারকে অনুভূমিকের সাথে 30° কোণে ${F} N বল দিয়ে ${pull?'টানা':'ঠেলা'} হচ্ছে। রোলারের ওপর ভূমির অভিলম্ব প্রতিক্রিয়া কত? (g = 9.8 m s⁻²)`,c:fm(c)+' N',
+ d:[[fm(pull?mg+up:mg-up)+' N',pull?'টানার সময় বলের উল্লম্ব উপাংশ ওপরের দিকে, তাই এটি ওজন থেকে বিয়োগ হয়।':'ঠেলার সময় বলের উল্লম্ব উপাংশ নিচের দিকে, তাই এটি ওজনের সাথে যোগ হয়।'],[fm(mg)+' N','বলের উল্লম্ব উপাংশ বাদ পড়েছে।'],[fm(pull?mg-cs:mg+cs)+' N','উল্লম্ব উপাংশে sin এর বদলে cos নেওয়া হয়েছে; θ অনুভূমিক থেকে মাপা, তাই উল্লম্ব উপাংশ F sinθ।']],
+ e:`উল্লম্ব উপাংশ = F sin30° = ${F} × ½ = ${fm(up)} N, যা ${pull?'ওপরের':'নিচের'} দিকে। N = mg ${pull?'−':'+'} F sinθ = ${fm(mg)} ${pull?'−':'+'} ${fm(up)} = ${fm(c)} N`}},
+/* rain: umbrella angle, relative speed, car window */
+()=>{const[a,b,c]=pick(PY),kind=pick(['umb','rel','car']);
+ if(kind==='rel')return{t:RV,q:`বৃষ্টি ${b} m/s বেগে খাড়া নিচে পড়ছে। একজন লোক ${a} m/s বেগে অনুভূমিকভাবে হাঁটছে। লোকের সাপেক্ষে বৃষ্টির বেগের মান কত?`,c:c+' m/s',
+  d:[[Math.abs(b-a)+' m/s','বেগ দুটি সরাসরি বিয়োগ করা হয়েছে, কিন্তু এরা পরস্পর লম্ব।'],[(a+b)+' m/s','বেগ দুটি সরাসরি যোগ করা হয়েছে, কিন্তু এরা পরস্পর লম্ব।'],[b+' m/s','লোকের বেগ বাদ পড়েছে; আপেক্ষিক বেগে দুটোই লাগে।']],
+  e:`{v}<sub>আপেক্ষিক</sub> = {v}<sub>বৃষ্টি</sub> − {v}<sub>লোক</sub>। বেগ দুটি লম্ব, তাই মান = √(${b}² + ${a}²) = √${b*b+a*a} = ${c} m/s`};
+ const car=kind==='car',ans=`উল্লম্বের সাথে tan⁻¹(${frac(a,b)})`;
+ const q=car?`স্থির বাতাসে বৃষ্টি ${b} m/s বেগে খাড়া পড়ছে। একটি গাড়ি ${a} m/s বেগে চলছে। গাড়ির পাশের জানালায় বৃষ্টির দাগ উল্লম্বের সাথে কত কোণে হেলে থাকবে?`:`বৃষ্টি ${b} m/s বেগে খাড়া নিচে পড়ছে। একজন লোক ${a} m/s বেগে অনুভূমিকভাবে হাঁটছে। বৃষ্টি থেকে বাঁচতে ছাতা কীভাবে ধরতে হবে?`;
+ const dir=car?'':' সামনের দিকে হেলিয়ে';
+ return{t:RV,q,c:ans+dir,
+  d:[[`উল্লম্বের সাথে tan⁻¹(${frac(b,a)})`+dir,'অনুপাত উল্টে গেছে: উল্লম্বের সাথে কোণের জন্য tanθ = অনুভূমিক বেগ / উল্লম্ব বেগ।'],...(car?[]:[[ans+' পেছনের দিকে হেলিয়ে','লোকের সাপেক্ষে বৃষ্টি সামনের দিক থেকে আসে, তাই ছাতা সামনে হেলাতে হয়।']]),[`উল্লম্বের সাথে tan⁻¹(${frac(a,c)})`+dir,`লব্ধি বেগ ${c} দিয়ে ভাগ করা হয়েছে; tan এর জন্য ভাগ করতে হয় উল্লম্ব বেগ দিয়ে।`],[`উল্লম্বের সাথে tan⁻¹(${frac(b,c)})`+dir,'উল্লম্ব বেগকে লব্ধি বেগ দিয়ে ভাগ করা হয়েছে; এটি tan নয়।']],
+  e:`${car?'গাড়ির':'লোকের'} সাপেক্ষে বৃষ্টির আপেক্ষিক বেগের অনুভূমিক অংশ ${a} m/s, উল্লম্ব অংশ ${b} m/s। উল্লম্বের সাথে কোণ tanθ = ${a}/${b}${frac(a,b)!==a+'/'+b?' = '+frac(a,b):''}।${car?' দাগ নিচের দিকে গাড়ির পেছনে হেলে থাকে।':' বৃষ্টি সামনের দিক থেকে আসে, তাই ছাতা সামনে হেলাতে হয়।'}`}},
+/* rain with wind */
+()=>{const[a,b]=pick(PY),h=ri(1,6),beh=Math.random()<.5,w=beh?h+a:(h>a?h-a:h+a),rel=w-h,back=rel>0,ab=Math.abs(rel);
+ const D=x=>x?'পেছনের দিকে':'সামনের দিকে',S=(n,x)=>`উল্লম্বের সাথে tan⁻¹(${frac(n,b)}) কোণে ${D(x)} হেলিয়ে`;
+ return{t:RV,q:`বৃষ্টি ${b} m/s বেগে খাড়া পড়ছিল। এখন বাতাস পূর্ব দিকে বইছে, ফলে বৃষ্টির ফোঁটা পূর্ব দিকে ${w} m/s অনুভূমিক বেগ পেয়েছে। একজন লোক পূর্ব দিকে ${h} m/s বেগে হাঁটছে। ছাতা কীভাবে ধরতে হবে?`,c:S(ab,back),
+  d:[[S(ab,!back),'দিক উল্টে গেছে: বৃষ্টি যেদিক থেকে আসে ছাতা সেদিকে হেলাতে হয়।'+(back?' বৃষ্টি লোকের চেয়ে দ্রুত পূর্বে যাচ্ছে, তাই পেছন (পশ্চিম) থেকে আসছে।':' লোক বৃষ্টির চেয়ে দ্রুত পূর্বে যাচ্ছে, তাই বৃষ্টি সামনে থেকে আসছে।')],[S(w,true),'লোকের বেগ বাদ পড়েছে; লোকের সাপেক্ষে আপেক্ষিক বেগ নিতে হয়।'],[S(w+h,back),'লোক ও বাতাস একই দিকে, তাই বেগ বিয়োগ হবে, যোগ নয়।']],
+  e:`লোকের সাপেক্ষে বৃষ্টির অনুভূমিক বেগ = ${w} − ${h} = ${fm(rel)} m/s (${back?'পূর্বমুখী, অর্থাৎ বৃষ্টি পেছন থেকে আসছে':'পশ্চিমমুখী, অর্থাৎ বৃষ্টি সামনে থেকে আসছে'})। উল্লম্ব বেগ ${b} m/s। tanθ = ${ab}/${b}, তাই ছাতা উল্লম্বের সাথে tan⁻¹(${frac(ab,b)}) কোণে ${D(back)} হেলাতে হবে।`}},
+/* parallel vectors: find the unknown */
+()=>{let A,lam,k;do{A=[nz(-4,4),nz(-4,4),nz(-4,4)];lam=pick([2,3,-2,-3,4]);k=ri(0,2)}while(Math.abs(lam*A[k])>16);
+ const B=A.map(x=>x*lam),m=B[k],c=B.slice();c[k]=1;const nm=['','',''];nm[k]='m';const j=(k+1)%3,ax=['x','y','z'];
+ const rest=dot3(A,B)-A[k]*B[k];
+ return{t:CR,q:`{A} = ${vs(A)} এবং {B} = ${terms(c,nm)} পরস্পর সমান্তরাল হলে m এর মান কত?`,c:fm(m),
+  d:[[frac(-rest,A[k]),'এটি লম্ব হওয়ার শর্ত ({A}·{B} = 0) থেকে পাওয়া; সমান্তরালের জন্য উপাংশের অনুপাত সমান হতে হয়।'],[fm(-m),'চিহ্ন ভুল হয়েছে।'],[frac(A[k],lam),'অনুপাত উল্টে গেছে: B/A = λ, তাই m = λ × A এর ঐ উপাংশ।'],[fm(lam),'এটি অনুপাত λ; m পেতে λ কে A এর ঐ উপাংশ দিয়ে গুণ করতে হয়।']],
+  e:`সমান্তরাল হলে উপাংশের অনুপাত সমান: B<sub>${ax[j]}</sub>/A<sub>${ax[j]}</sub> = ${fm(B[j])}/${p(A[j])} = ${fm(lam)}। তাই m/${p(A[k])} = ${fm(lam)} ⇒ m = ${fm(m)}`}},
+/* work = 0: find the unknown */
+()=>{let F,s,k,rest;do{F=[nz(-5,5),nz(-5,5),nz(-5,5)];s=[nz(-4,4),nz(-4,4),nz(-4,4)];k=ri(0,2);rest=dot3(F,s)-F[k]*s[k]}while(rest===0||Math.abs(F[k])===1);
+ const m=-rest/F[k],c=s.slice();c[k]=1;const nm=['','',''];nm[k]='m';
+ return{t:DOT,q:`একটি বস্তুর ওপর {F} = (${vs(F)}) N বল ক্রিয়া করায় এর সরণ হলো {s} = (${terms(c,nm)}) m। বলটি কোনো কাজ না করলে m এর মান কত?`,c:frac(-rest,F[k]),
+  d:[[frac(rest,F[k]),'সমীকরণ সমাধানে চিহ্ন ভুল হয়েছে।'],[fm(-rest),`${F[k]} দিয়ে ভাগ করতে ভুলে গেছ।`],[frac(-F[k],rest),'ভাগ উল্টে গেছে।'],[fm(-rest*F[k]),'ভাগের বদলে গুণ করা হয়েছে।']],
+  e:`কাজ শূন্য মানে {F}·{s} = 0। ${F.map((f,i)=>i===k?p(f)+'m':mul(f,s[i])).join(' + ')} = 0 ⇒ ${fm(rest)} + ${p(F[k])}m = 0 ⇒ m = ${frac(-rest,F[k])}`}},
+/* angle from tanθ = |A×B|/(A·B) */
+()=>{if(Math.random()<.5){const T=pick([[1,45],['√3',60],['1/√3',30]]),th=T[1],all=[30,45,60,90,120,135,150];
+  const notes={[90-th]:'tanθ এর বদলে cotθ ধরা হয়েছে; ক্রস গুণন লবে থাকলে tanθ।',[180-th]:'ডট গুণন ধনাত্মক, তাই কোণ সূক্ষ্মকোণ।',90:'90° তে ডট গুণন শূন্য হতো।'};
+  const d=all.filter(x=>x!==th).sort((x,y)=>(notes[y]?1:0)-(notes[x]?1:0)).map(x=>[x+'°',notes[x]||'tan এর মান ভুল পড়া হয়েছে: tan30° = 1/√3, tan45° = 1, tan60° = √3।']);
+  return{t:DC,q:`দুটি ভেক্টরের জন্য |{A} × {B}| = ${T[0]===1?'':T[0]+' '}({A}·{B}) হলে তাদের মধ্যবর্তী কোণ কত?`,c:th+'°',d,e:`tanθ = |{A} × {B}|/({A}·{B}) = ${T[0]} ⇒ θ = ${th}°`}}
+ let a1,a2,b1,b2,cr,dt,wr;do{a1=ri(1,5);a2=ri(0,5);b1=ri(0,5);b2=ri(1,5);cr=a1*b2-a2*b1;dt=a1*b1+a2*b2;wr=a1*b2+a2*b1}while(cr===0||dt===0||wr===0||Math.abs(cr)===dt);
+ return{t:DC,q:`{A} = ${vs([a1,a2,0])} এবং {B} = ${vs([b1,b2,0])} এর মধ্যবর্তী কোণ θ হলে θ = ?`,c:`tan⁻¹(${frac(Math.abs(cr),dt)})`,
+  d:[[`tan⁻¹(${frac(dt,Math.abs(cr))})`,'লব ও হর উল্টে গেছে: tanθ = |{A} × {B}|/({A}·{B})।'],[`tan⁻¹(${frac(wr,dt)})`,'ক্রস গুণনে বিয়োগের বদলে যোগ করা হয়েছে।'],[`tan⁻¹(${frac(Math.abs(cr),wr)})`,'ডট গুণনে ভিন্ন অক্ষের উপাংশ গুণ করা হয়েছে।']],
+  e:`{A}·{B} = ${mul(a1,b1)} + ${mul(a2,b2)} = ${dt}। {A} × {B} = (${a1} × ${b2} − ${a2} × ${b1})[k] = ${fm(cr)}[k]। tanθ = |{A} × {B}|/({A}·{B}) = ${frac(Math.abs(cr),dt)}`}},
+/* parallelogram area from diagonals */
+()=>{let d1,d2,c,n,dt,sm;do{d1=[nz(-3,3),nz(-3,3),ri(-3,3)];d2=[nz(-3,3),nz(-3,3),ri(-3,3)];c=cross3(d1,d2);n=dot3(c,c);dt=dot3(d1,d2);sm=c[0]+c[1]+c[2]}while(n===0||dt===0||sm===0);const u=' বর্গ একক';
+ return{t:CR,q:`একটি সামান্তরিকের কর্ণ দুটি {d₁} = ${vs(d1)} এবং {d₂} = ${vs(d2)}। সামান্তরিকের ক্ষেত্রফল কত?`,c:hsurd(n)+u,
+  d:[[surd(n)+u,'½ বাদ পড়েছে: বাহু দেওয়া থাকলে |{A} × {B}|, কিন্তু কর্ণ দেওয়া থাকলে ½|{d₁} × {d₂}|।'],[frac(Math.abs(dt),2)+u,'ক্রস গুণনের বদলে ডট গুণন নেওয়া হয়েছে।'],[frac(Math.abs(sm),2)+u,'ক্রস গুণনের উপাংশগুলো সরাসরি যোগ করা হয়েছে; মান পেতে বর্গের যোগফলের বর্গমূল নিতে হয়।']],
+  e:`{d₁} × {d₂} = ${vs(c)}। |{d₁} × {d₂}| = √(${c.map(x=>x*x).join(' + ')}) = ${surd(n)}। ক্ষেত্রফল = ½ × ${surd(n)} = ${hsurd(n)}${u}`}},
+/* 3×3 determinant cross product */
+()=>{let A,B,c;do{A=[nz(-4,4),nz(-4,4),nz(-4,4)];B=[nz(-4,4),nz(-4,4),nz(-4,4)];c=cross3(A,B)}while(c.some(x=>x===0));
+ return{t:CR,q:`{A} = ${vs(A)} এবং {B} = ${vs(B)} হলে {A} × {B} = ?`,c:vs(c),
+  d:[[vs([c[0],-c[1],c[2]]),'মাঝের [j] পদের আগে ঋণাত্মক চিহ্ন দিতে ভুলে গেছ।'],[vs(c.map(x=>-x)),'ক্রম উল্টে গেছে: এটি {B} × {A}।'],[vs([A[0]*B[0],A[1]*B[1],A[2]*B[2]]),'একই অক্ষের উপাংশ গুণ করা হয়েছে; এটি ক্রস গুণন নয়।']],
+  e:`নির্ণায়ক থেকে: [i](${mul(A[1],B[2])} − ${mul(A[2],B[1])}) − [j](${mul(A[0],B[2])} − ${mul(A[2],B[0])}) + [k](${mul(A[0],B[1])} − ${mul(A[1],B[0])}) = ${vs(c)}`}},
+/* vector triple product */
+()=>{let A,B,C,R,ab,ac;do{A=rnz();B=rnz();C=rnz();ac=dot3(A,C);ab=dot3(A,B);R=[0,1,2].map(i=>B[i]*ac-C[i]*ab)}while(isZ(R)||isZ(cross3(cross3(A,B),C).map((x,i)=>x-R[i])));
+ const W=[0,1,2].map(i=>B[i]*ab-C[i]*ac);
+ return{t:CR,q:`{A} = ${vs(A)}, {B} = ${vs(B)} এবং {C} = ${vs(C)} হলে {A} × ({B} × {C}) = ?`,c:vs(R),
+  d:[[vs(R.map(x=>-x)),'BAC − CAB সূত্রের চিহ্ন উল্টে গেছে।'],[vs(cross3(cross3(A,B),C)),'এটি ({A} × {B}) × {C}; ক্রস গুণন সংযোগ নিয়ম মানে না।'],[vs(W),'ডট গুণনের জোড়া ভুল হয়েছে: {B} এর সাথে ({A}·{C}), {C} এর সাথে ({A}·{B})।']],
+  e:`{A} × ({B} × {C}) = {B}({A}·{C}) − {C}({A}·{B})। {A}·{C} = ${fm(ac)}, {A}·{B} = ${fm(ab)}। তাই = ${fm(ac)}(${vs(B)}) − ${p(ab)}(${vs(C)}) = ${vs(R)}`}},
+/* direction cosines */
+()=>{const ax=['x','y','z'];if(Math.random()<.6){const t=pick(TRI),v=sgn(t.slice(0,3)),m=t[3],k=ri(0,2),j=(k+1)%3,s=v.reduce((x,y)=>x+Math.abs(y),0);
+  return{t:RC,q:`{A} = ${vs(v)} ভেক্টরটি ${ax[k]} অক্ষের সাথে যে কোণ উৎপন্ন করে তার কোসাইন কত?`,c:frac(v[k],m),
+   d:[[frac(v[j],m),`${ax[j]}-উপাংশ নেওয়া হয়েছে; ${ax[k]} অক্ষের জন্য ${ax[k]}-উপাংশ লাগে।`],[frac(-v[k],m),'চিহ্ন ভুল হয়েছে।'],[frac(v[k],s),'উপাংশের যোগফল দিয়ে ভাগ করা হয়েছে; ভাগ করতে হয় ভেক্টরের মান দিয়ে।'],[frac(v[k],m*m),'মানের বর্গ দিয়ে ভাগ করা হয়েছে।']],
+   e:`|{A}| = √(${v.map(x=>x*x).join(' + ')}) = ${m}। cos(${ax[k]} অক্ষের সাথে কোণ) = A<sub>${ax[k]}</sub>/A = ${frac(v[k],m)}`}}
+ const[a,b,g]=pick(DIRC),sum=180-a-b,cand=[30,45,60,90].filter(x=>x!==g);
+ const d=[];if(sum>0&&sum!==g)d.push([sum+'°','দিক কোণগুলোর যোগফল 180° হয় না; cos²α + cos²β + cos²γ = 1 ব্যবহার করতে হয়।']);cand.forEach(x=>d.push([x+'°','cos² এর হিসাব ভুল হয়েছে: cos²30° = ¾, cos²45° = ½, cos²60° = ¼, cos²90° = 0।']));
+ const c2={30:'¾',45:'½',60:'¼',90:'0'};
+ return{t:RC,q:`একটি ভেক্টর x অক্ষের সাথে ${a}° এবং y অক্ষের সাথে ${b}° কোণ উৎপন্ন করে। z অক্ষের সাথে এর সূক্ষ্মকোণ কত?`,c:g+'°',d,
+  e:`cos²γ = 1 − cos²${a}° − cos²${b}° = 1 − ${c2[a]} − ${c2[b]} = ${c2[g]} ⇒ γ = ${g}°`}},
+/* vector differentiation: velocity and acceleration from position */
+()=>{const a=nz(-3,3),b=nz(-6,6),c=nz(-5,5),t=ri(1,3),vx=2*a*t,n=vx*vx+b*b,R=`${terms([a,b,c],['t²','t',''])}`;
+ if(Math.random()<.7)return{t:CAL,q:`একটি কণার অবস্থান ভেক্টর {r} = (${R}) m, যেখানে t সেকেন্ডে। t = ${t} s সময়ে কণার দ্রুতি কত?`,c:surd(n)+' m s⁻¹',
+  d:[[surd((a*t*t)**2+(b*t)**2+c*c)+' m s⁻¹','অন্তরীকরণ না করে অবস্থান ভেক্টরে t বসানো হয়েছে; এটি অবস্থানের মান, দ্রুতি নয়।'],[surd((a*t)**2+b*b)+' m s⁻¹','t² এর অন্তরজ 2t; 2 বাদ পড়েছে।'],[surd(n+c*c)+' m s⁻¹','ধ্রুবক পদের অন্তরজ শূন্য; '+fm(c)+'[k] থেকে বেগ আসে না।']],
+  e:`{v} = d{r}/dt = ${terms([2*a,b,0],['t','',''])}। t = ${t} এ {v} = ${vs([vx,b,0])}। দ্রুতি = √(${vx*vx} + ${b*b}) = ${surd(n)} m s⁻¹`};
+ return{t:CAL,q:`একটি কণার অবস্থান ভেক্টর {r} = (${R}) m, যেখানে t সেকেন্ডে। কণার ত্বরণের মান কত?`,c:fm(Math.abs(2*a))+' m s⁻²',
+  d:[[fm(Math.abs(a))+' m s⁻²','t² এর দ্বিতীয় অন্তরজ 2; 2 বাদ পড়েছে।'],[surd(4*a*a+b*b)+' m s⁻²','এটি t = 1 s এ বেগ; ত্বরণ পেতে আরেকবার অন্তরীকরণ করতে হয়।'],['0 m s⁻²','t² পদের দ্বিতীয় অন্তরজ শূন্য নয়।']],
+  e:`{v} = d{r}/dt = ${terms([2*a,b,0],['t','',''])}, {a} = d{v}/dt = ${vs([2*a,0,0])}। ত্বরণের মান = ${fm(Math.abs(2*a))} m s⁻² (ধ্রুব)`}}
+];
+
+/* ---------- templates added to cover every past admission question type ---------- */
+const lin=ps=>{let o='';ps.forEach(([c,v])=>{if(!c)return;const a=Math.abs(c),co=(a===1&&v)?'':a;o+=(o?(c<0?' − ':' + '):(c<0?'−':''))+co+v});return o||'0'};
+const r3=n=>n%2===0?((n/2===1?'':n/2)+'√3'):n+'√3/2';
+const ANG=(th,cands,note)=>cands.filter(x=>x!==th).map(x=>[x+'°',note(x)]);
+const NEWT={
+angcos:()=>{let A,B,ma,mb,d;do{const t1=pick(TRI),t2=pick(TRI);A=sgn(t1.slice(0,3));B=sgn(t2.slice(0,3));ma=t1[3];mb=t2[3];d=dot3(A,B)}while(d===0);const s=ma*mb;
+ return{t:DOT,q:`{A} = ${vs(A)} এবং {B} = ${vs(B)} এর মধ্যবর্তী কোণ θ হলে θ = ?`,c:`cos⁻¹(${frac(d,s)})`,
+ d:[[`cos⁻¹(${frac(-d,s)})`,'ডট গুণনের চিহ্ন ভুল হয়েছে।'],[`sin⁻¹(${frac(d,s)})`,'ডট গুণন থেকে cosθ পাওয়া যায়, sinθ নয়।'],[`cos⁻¹(${frac(d,ma+mb)})`,'মান দুটি গুণ না করে যোগ করা হয়েছে।'],[`cos⁻¹(${frac(d,s*s)})`,'মানের গুণফলের বর্গ দিয়ে ভাগ করা হয়েছে।']],
+ e:`cosθ = ({A}·{B})/(AB)। {A}·{B} = ${fm(d)}, A = ${ma}, B = ${mb}। cosθ = ${fm(d)}/${s} = ${frac(d,s)} ⇒ θ = cos⁻¹(${frac(d,s)})`}},
+riverdir:()=>{if(Math.random()<.5){const u=ri(2,8),v=2*u;
+  return{t:RV,q:`স্রোতের বেগ ${u} m/s। স্থির পানিতে ${v} m/s বেগের একজন সাঁতারু ঠিক বিপরীত বিন্দুতে পৌঁছাতে চাইলে স্রোতের দিকের সাথে কত কোণে সাঁতার কাটতে হবে?`,c:'120°',
+  d:[['60°','এটি উজানের দিকের (তীর বরাবর স্রোতের বিপরীতে) সাথে কোণ; স্রোতের দিকের সাথে কোণ 90° + 30° = 120°।'],['90°','স্রোতের সাথে লম্বভাবে সাঁতার কাটলে ভাটিতে সরে যেতে হবে।'],['150°','sinβ = u/v = 1/2 থেকে β = 30°, 60° নয়।']],
+  e:`তীরের লম্বের সাথে উজানের দিকে β কোণে চলতে হয়, যেখানে sinβ = u/v = ${u}/${v} = 1/2 ⇒ β = 30°। স্রোতের দিকের সাথে কোণ = 90° + 30° = 120°।`}}
+ const[v,u]=pick(RIV);return{t:RV,q:`স্রোতের বেগ ${u} m/s, স্থির পানিতে নৌকার বেগ ${v} m/s। ঠিক বিপরীত বিন্দুতে পৌঁছাতে নৌকাকে তীরের লম্বের সাথে উজানের দিকে কত কোণে চালাতে হবে?`,c:`sin⁻¹(${frac(u,v)})`,
+  d:[[`cos⁻¹(${frac(u,v)})`,'sin এর বদলে cos নেওয়া হয়েছে; কোণটি তীরের লম্ব থেকে মাপা।'],[`tan⁻¹(${frac(u,v)})`,'নৌকার বেগ হলো অতিভুজ, তাই sinβ = u/v।'],[`tan⁻¹(${frac(v,u)})`,'অনুপাত উল্টে গেছে এবং ভুল ত্রিকোণমিতিক অনুপাত নেওয়া হয়েছে।']],
+  e:`নৌকার বেগের উজানমুখী উপাংশ v sinβ স্রোতকে বাতিল করবে: v sinβ = u ⇒ sinβ = ${u}/${v}${frac(u,v)!==u+'/'+v?' = '+frac(u,v):''}`}},
+carglass:()=>{const V=2*ri(3,10),th=pick([30,60]),c=th===30?fm(V/2):r3(V),w=th===30?r3(V):fm(V/2);
+ return{t:RV,q:`বাতাসের কারণে বৃষ্টি ${V} m/s বেগে উল্লম্বের সাথে ${th}° কোণে গাড়ির চলার দিকে হেলে পড়ছে। গাড়ির পেছনের খাড়া কাচ না ভেজাতে গাড়ির ন্যূনতম বেগ কত হতে হবে?`,c:c+' m/s',
+ d:[[w+' m/s','উল্লম্বের সাথে কোণ দেওয়া, তাই অনুভূমিক উপাংশ V sinθ, V cosθ নয়।'],[V+' m/s','পুরো বেগ নয়, শুধু অনুভূমিক উপাংশের সমান হলেই চলে।'],['0 m/s','গাড়ি থেমে থাকলে বৃষ্টি পেছন থেকে কাচে পড়বে।']],
+ e:`বৃষ্টির অনুভূমিক বেগ = V sin${th}° = ${c} m/s, গাড়ির চলার দিকে। গাড়ির বেগ এর সমান বা বেশি হলে গাড়ির সাপেক্ষে বৃষ্টি আর সামনের দিকে যায় না, তাই পেছনের কাচ ভেজে না।`}},
+abc:()=>{const[a,b,c,th]=pick([[12,5,13,90],[3,4,5,90],[6,8,10,90],[3,5,7,60],[7,8,13,60],[3,8,7,120],[5,8,7,120]]);
+ return{t:AD,q:`{A} + {B} = {C} এবং A = ${a}, B = ${b}, C = ${c} হলে {A} ও {B} এর মধ্যবর্তী কোণ কত?`,c:th+'°',
+ d:ANG(th,[60,90,120,180,45],x=>x===180-th?'cosθ এর চিহ্ন ভুল হয়েছে।':x===180?'180° তে লব্ধি হতো |A − B|।':'C² = A² + B² + 2AB cosθ থেকে cosθ হিসাব করো।'),
+ e:`C² = A² + B² + 2AB cosθ ⇒ ${c*c} = ${a*a} + ${b*b} + ${2*a*b} cosθ ⇒ cosθ = ${frac(c*c-a*a-b*b,2*a*b)} ⇒ θ = ${th}°`}},
+maxmin:()=>{const P=ri(3,12),Q=ri(1,P-1),a=P+Q,b=P-Q;
+ return{t:AD,q:`দুটি বলের সর্বোচ্চ লব্ধি ${a} N এবং সর্বনিম্ন লব্ধি ${b} N। বল দুটি পরস্পর লম্বভাবে ক্রিয়া করলে লব্ধি কত?`,c:surd(P*P+Q*Q)+' N',
+ d:[[surd(a*a+b*b)+' N','সর্বোচ্চ ও সর্বনিম্ন লব্ধিকেই বল দুটি ধরা হয়েছে; আগে P ও Q বের করতে হয়।'],[surd(a*b)+' N','বর্গের যোগফলের বদলে বিয়োগফল নেওয়া হয়েছে।'],[P+' N','এটি শুধু বড় বলটি।']],
+ e:`P + Q = ${a}, P − Q = ${b} ⇒ P = ${P} N, Q = ${Q} N। লম্ব হলে R = √(${P}² + ${Q}²) = ${surd(P*P+Q*Q)} N`}},
+perpres:()=>{const[a,b,c]=pick(PY),k=pick([1,2,5,10]),Q=a*k,R=b*k,P=c*k;
+ return{t:AD,q:`দুটি বলের লব্ধি ${R} N। ছোট বলটির মান ${Q} N এবং এটি লব্ধির সাথে লম্বভাবে ক্রিয়া করে। বড় বলটির মান কত?`,c:P+' N',
+ d:[[(R+Q)+' N','লম্ব বলগুলো সরাসরি যোগ হয় না।'],[surd(Math.abs(R*R-Q*Q))+' N','বর্গের যোগফলের বদলে বিয়োগফল নেওয়া হয়েছে; বড় বলটিই এখানে অতিভুজ।'],[Math.abs(R-Q)+' N','বল দুটি সরাসরি বিয়োগ করা হয়েছে।']],
+ e:`ছোট বল Q লব্ধি R এর লম্ব, তাই বড় বল P, Q ও R একটি সমকোণী ত্রিভুজ গঠন করে যার অতিভুজ P: P = √(R² + Q²) = √(${R*R} + ${Q*Q}) = ${P} N`}},
+rollerdiff:()=>{const m=pick([10,20,30,40]),F=2*ri(10,50),th=pick([30,60]),c=th===30?fm(F):r3(2*F),one=th===30?fm(F/2):r3(F),cs=th===30?r3(2*F):fm(F);
+ return{t:RC,q:`${m} kg ভরের একটি লন রোলারকে অনুভূমিকের সাথে ${th}° কোণে ${F} N বল দিয়ে একবার টানা ও একবার ঠেলা হলো। দুই ক্ষেত্রে ভূমির অভিলম্ব প্রতিক্রিয়ার পার্থক্য কত?`,c:c+' N',
+ d:[[one+' N','এটি শুধু একটি ক্ষেত্রের উল্লম্ব উপাংশ; টানায় বিয়োগ ও ঠেলায় যোগ, তাই পার্থক্য দ্বিগুণ।'],[cs+' N','উল্লম্ব উপাংশে sin এর বদলে cos নেওয়া হয়েছে।'],['0 N','অনুভূমিক উপাংশ একই, কিন্তু উল্লম্ব উপাংশের দিক উল্টো, তাই অভিলম্ব প্রতিক্রিয়া আলাদা।']],
+ e:`টানা: N₁ = mg − F sinθ, ঠেলা: N₂ = mg + F sinθ। পার্থক্য = 2F sinθ = 2 × ${F} × sin${th}° = ${c} N (ভরের ওপর নির্ভর করে না)`}},
+eqres:()=>{const P=pick([5,6,8,10,12,20]),[R,th]=pick([[P+'√3',60],[P+'√2',90],[String(P),120],[String(2*P),0]]);
+ return{t:AD,q:`সমান মানের দুটি ভেক্টরের প্রতিটির মান ${P} একক এবং লব্ধি ${R} একক। ভেক্টর দুটির মধ্যবর্তী কোণ কত?`,c:th+'°',
+ d:ANG(th,[0,60,90,120,180],x=>'সমান ভেক্টরের লব্ধি মুখস্থ রাখো: 0° → 2P, 60° → P√3, 90° → P√2, 120° → P, 180° → 0।'),
+ e:`R = 2P cos(θ/2) ⇒ ${R} = ${2*P} cos(θ/2) ⇒ θ = ${th}°`}},
+comp2:()=>{const[a,b,c]=pick(PY),ctx=pick([['বাতাসের বেগের','m/s'],['একটি বলের','N']]);
+ if(Math.random()<.5)return{t:RC,q:`${ctx[0]} পূর্বমুখী উপাংশ ${a} ${ctx[1]} এবং উত্তরমুখী উপাংশ ${b} ${ctx[1]}। এর মান কত?`,c:c+' '+ctx[1],
+  d:[[(a+b)+' '+ctx[1],'লম্ব উপাংশ সরাসরি যোগ হয় না।'],[Math.abs(a-b)+' '+ctx[1],'উপাংশ বিয়োগ করা হয়েছে।'],[(a*a+b*b)+' '+ctx[1],'বর্গমূল নিতে ভুলে গেছ।']],
+  e:`মান = √(${a}² + ${b}²) = √${a*a+b*b} = ${c} ${ctx[1]}`};
+ return{t:RC,q:`${ctx[0]} পূর্বমুখী উপাংশ ${a} ${ctx[1]} এবং উত্তরমুখী উপাংশ ${b} ${ctx[1]}। এর দিক কোনটি?`,c:`পূর্ব দিকের সাথে tan⁻¹(${frac(b,a)}) কোণে উত্তরে`,
+  d:[[`পূর্ব দিকের সাথে tan⁻¹(${frac(a,b)}) কোণে উত্তরে`,'অনুপাত উল্টে গেছে: পূর্বের সাথে কোণে tanα = উত্তরমুখী/পূর্বমুখী।'],[`পূর্ব দিকের সাথে tan⁻¹(${frac(b,c)}) কোণে উত্তরে`,'লব্ধি দিয়ে ভাগ করা হয়েছে; tan এর জন্য পূর্বমুখী উপাংশ দিয়ে ভাগ।'],[`পূর্ব দিকের সাথে tan⁻¹(${frac(b,a)}) কোণে দক্ষিণে`,'উত্তরমুখী উপাংশ ধনাত্মক, তাই দিক উত্তরে।']],
+  e:`tanα = ${b}/${a}${frac(b,a)!==b+'/'+a?' = '+frac(b,a):''}, তাই পূর্ব দিকের সাথে α = tan⁻¹(${frac(b,a)}) কোণে উত্তরে।`}},
+crossmag:()=>{let A,B,th,n;do{A=ri(2,10);B=ri(2,10);n=A*B;th=pick([30,60,90,150])}while(n%2);
+ const val={30:fm(n/2),150:fm(n/2),60:r3(n),90:fm(n)},cv={30:r3(n),150:r3(n),60:fm(n/2),90:'0'};
+ return{t:CR,q:`দুটি ভেক্টরের মান ${A} ও ${B} একক এবং মধ্যবর্তী কোণ ${th}°। তাদের ক্রস গুণনের মান কত?`,c:val[th],
+ d:[[cv[th],'sin এর বদলে cos নেওয়া হয়েছে; এটি ডট গুণনের মান।'],[th===90?fm(n/2):fm(n),th===90?'sin90° = 1, ½ নয়।':'কোণ উপেক্ষা করা হয়েছে; এটি শুধু θ = 90° হলে সঠিক।'],[fm(2*n),'2 দিয়ে গুণ করা হয়েছে; |{A} × {B}| = AB sinθ।']],
+ e:`|{A} × {B}| = AB sinθ = ${A} × ${B} × sin${th}° = ${val[th]}`}},
+join:()=>{let P,Q;do{P=[ri(-4,4),ri(-4,4),ri(-4,4)];Q=[ri(-4,4),ri(-4,4),ri(-4,4)]}while(isZ(P)||isZ(Q)||P.some((x,i)=>x===Q[i]));const D=Q.map((x,i)=>x-P[i]);
+ if(Math.random()<.5)return{t:RC,q:`P(${P.map(fm).join(', ')}) ও Q(${Q.map(fm).join(', ')}) বিন্দু দুটি হলে {PQ} = ?`,c:vs(D),
+  d:[[vs(D.map(x=>-x)),'এটি {QP}; {PQ} = Q এর অবস্থান ভেক্টর − P এর অবস্থান ভেক্টর।'],[vs(P.map((x,i)=>x+Q[i])),'অবস্থান ভেক্টর দুটি যোগ করা হয়েছে; বিয়োগ করতে হয়।'],[vs(Q),'এটি শুধু Q এর অবস্থান ভেক্টর।']],
+  e:`{PQ} = {r}<sub>Q</sub> − {r}<sub>P</sub> = (${vs(Q)}) − (${vs(P)}) = ${vs(D)}`};
+ const n=dot3(D,D);return{t:RC,q:`P(${P.map(fm).join(', ')}) ও Q(${Q.map(fm).join(', ')}) বিন্দু দুটির মধ্যে দূরত্ব কত?`,c:surd(n),
+  d:[[surd(dot3(Q,Q)),'এটি মূলবিন্দু থেকে Q এর দূরত্ব।'],[String(n),'বর্গমূল নিতে ভুলে গেছ।'],[surd(P.map((x,i)=>(x+Q[i])**2).reduce((s,y)=>s+y,0)),'স্থানাঙ্ক বিয়োগের বদলে যোগ করা হয়েছে।']],
+  e:`{PQ} = ${vs(D)}। দূরত্ব = |{PQ}| = √(${D.map(x=>x*x).join(' + ')}) = ${surd(n)}`}},
+riverwidth:()=>{const[v,u,w]=pick(RIV),t=ri(20,60);
+ return{t:RV,q:`স্থির পানিতে ${v} m/s বেগের একটি নৌকা স্রোতের সাথে লম্বভাবে চালিয়ে ${t} s এ নদী পার হলো। স্রোতের বেগ ${u} m/s হলে নদীর প্রস্থ কত?`,c:(v*t)+' m',
+ d:[[(w*t)+' m',`√(v² − u²) = ${w} m/s হলো সোজা পার হওয়ার বেগ; এখানে নৌকা লম্বভাবে চলেছে।`],[((v+u)*t)+' m','স্রোতের বেগ আড়াআড়ি বেগের সাথে যোগ হয় না।'],[(u*t)+' m','এটি ভাটিতে সরণ, নদীর প্রস্থ নয়।']],
+ e:`লম্বভাবে চালালে আড়াআড়ি বেগ = ${v} m/s, স্রোত শুধু ভাটিতে সরায়। প্রস্থ d = v × t = ${v} × ${t} = ${v*t} m`}},
+downup:()=>{const v=ri(5,15),u=ri(1,v-1),a=v+u,b=v-u,boat=Math.random()<.5;
+ return{t:RV,q:`একটি নৌকা স্রোতের অনুকূলে ${a} km/h এবং স্রোতের প্রতিকূলে ${b} km/h বেগে চলে। ${boat?'স্থির পানিতে নৌকার বেগ':'স্রোতের বেগ'} কত?`,c:(boat?v:u)+' km/h',
+ d:[[(boat?u:v)+' km/h',boat?'এটি স্রোতের বেগ: (অনুকূল − প্রতিকূল)/2।':'এটি নৌকার বেগ: (অনুকূল + প্রতিকূল)/2।'],[(boat?a+b:a-b)+' km/h','2 দিয়ে ভাগ করতে ভুলে গেছ।'],[(boat?a-b:a+b)+' km/h','যোগ ও বিয়োগ গুলিয়ে গেছে এবং 2 দিয়ে ভাগও বাদ পড়েছে।']],
+ e:`অনুকূলে v + u = ${a}, প্রতিকূলে v − u = ${b}। যোগ করে v = ${v} km/h, বিয়োগ করে u = ${u} km/h`}},
+riverres:()=>{const[a,b,c]=pick(PY);
+ return{t:RV,q:`স্থির পানিতে ${b} m/s বেগের একটি নৌকা স্রোতের সাথে লম্বভাবে চালানো হলো। স্রোতের বেগ ${a} m/s হলে তীরের সাপেক্ষে নৌকার লব্ধি বেগ কত?`,c:c+' m/s',
+ d:[[(a+b)+' m/s','লম্ব বেগ সরাসরি যোগ হয় না।'],[Math.abs(b-a)+' m/s','বেগ দুটি সরাসরি বিয়োগ করা হয়েছে।'],[surd(Math.abs(b*b-a*a))+' m/s','এটি সোজা পার হওয়ার সময়ের আড়াআড়ি বেগের সূত্র; এখানে বেগ দুটি লম্ব, তাই বর্গ যোগ হবে।']],
+ e:`নৌকার বেগ ও স্রোতের বেগ পরস্পর লম্ব। লব্ধি = √(${b}² + ${a}²) = ${c} m/s`}},
+forceacc:()=>{const t=pick(TRI),F=sgn(t.slice(0,3)),M=t[3],m=pick([2,3,4,5]),s=F.reduce((x,y)=>x+Math.abs(y),0);
+ return{t:RC,q:`${m} kg ভরের একটি বস্তুর ওপর {F} = (${vs(F)}) N বল ক্রিয়া করে। বস্তুর ত্বরণের মান কত?`,c:frac(M,m)+' m s⁻²',
+ d:[[frac(s,m)+' m s⁻²','উপাংশগুলো সরাসরি যোগ করা হয়েছে; বলের মান = √(উপাংশের বর্গের যোগফল)।'],[frac(M*M,m)+' m s⁻²','বর্গমূল নিতে ভুলে গেছ।'],[(M*m)+' m s⁻²','ভর দিয়ে ভাগের বদলে গুণ করা হয়েছে।']],
+ e:`|{F}| = √(${F.map(x=>x*x).join(' + ')}) = ${M} N। a = F/m = ${M}/${m}${frac(M,m)!==M+'/'+m?' = '+frac(M,m):''} m s⁻²`}},
+workpts:()=>{let F,P,Q,W,wq;do{F=[nz(-4,4),nz(-4,4),ri(-4,4)];P=[ri(-3,3),ri(-3,3),ri(-3,3)];Q=[ri(-3,3),ri(-3,3),ri(-3,3)];W=dot3(F,Q.map((x,i)=>x-P[i]));wq=dot3(F,Q)}while(W===0||isZ(P)||wq===W);
+ return{t:DOT,q:`{F} = (${vs(F)}) N একটি ধ্রুব বল একটি বস্তুকে P(${P.map(fm).join(', ')}) থেকে Q(${Q.map(fm).join(', ')}) বিন্দুতে সরায় (দূরত্ব মিটারে)। কৃতকাজ কত?`,c:fm(W)+' J',
+ d:[[fm(-W)+' J','সরণ উল্টো নেওয়া হয়েছে: সরণ = Q − P।'],[fm(wq)+' J','সরণের বদলে Q এর অবস্থান ভেক্টর নেওয়া হয়েছে।'],[fm(dot3(F,Q.map((x,i)=>x+P[i])))+' J','স্থানাঙ্ক বিয়োগের বদলে যোগ করা হয়েছে।']],
+ e:`সরণ {s} = Q − P = ${vs(Q.map((x,i)=>x-P[i]))}। W = {F}·{s} = ${fm(W)} J`}},
+solen:()=>{const a1=nz(-4,4),a2=nz(-4,4),b1=nz(-4,4),b2=nz(-4,4),c1=nz(-4,4),m=-(a1+a2);if(m===0)return NEWT.solen();
+ return{t:CAL,q:`{V} = (${lin([[a1,'x'],[b1,'y']])})[i] + (${lin([[a2,'y'],[b2,'z']])})[j] + (${lin([[c1,'x'],[1,'mz']]).replace('1mz','mz')})[k] ভেক্টর ক্ষেত্রটি সলিনয়ডাল হলে m এর মান কত?`,c:fm(m),
+ d:[[fm(-m),'চিহ্ন ভুল হয়েছে: ∇·{V} = 0 থেকে m = −(বাকি পদগুলো)।'],[fm(-a1),'y এর সাপেক্ষে j উপাংশের অন্তরজ বাদ পড়েছে।'],[fm(-(a1+a2+b1)),'x এর সাপেক্ষে শুধু x এর পদ অন্তরীকরণ হয়; y এর পদের অন্তরজ শূন্য।']],
+ e:`সলিনয়ডাল মানে ∇·{V} = 0: ∂(${lin([[a1,'x'],[b1,'y']])})/∂x + ∂(${lin([[a2,'y'],[b2,'z']])})/∂y + ∂(…)/∂z = ${fm(a1)} + ${p(a2)} + m = 0 ⇒ m = ${fm(m)}`}}
+};
+const TI={};['res','eqf','mag','unit','dot','perp','area','rtime','rdrift','rstraight','div','proj','roller','rain','wind','par','work0','tan','diag','cross3','triple','dircos','vdiff'].forEach((k,i)=>TI[k]=i);
+Object.entries(NEWT).forEach(([k,f])=>{TI[k]=TPL.length;TPL.push(f)});
+
+
+
+/* ---------- build a question ---------- */
+function fromBank(b){return{bi:BANK.indexOf(b),ti:-1,topic:b.t,src:'bank',text:b.q,exp:b.e,opts:shuffle(b.o.map((h,i)=>({h,ok:i===b.a,note:(b.w||{})[i]||''})))}}
+function fromTpl(fn){for(let i=0;i<40;i++){const r=fn();const seen=new Set([r.c]),d=[];for(const[v,n]of r.d){if(!seen.has(v)){seen.add(v);d.push({h:v,ok:false,note:n})}if(d.length===3)break}
+ if(d.length===3)return{bi:-1,ti:TPL.indexOf(fn),topic:r.t,src:'tpl',text:r.q,exp:r.e,opts:shuffle([{h:r.c,ok:true,note:''},...d])}}throw new Error('template failed')}
+
+const TT=TPL.map(f=>f().t);
+/* ---------- past admission questions (content/physics-1/vectors/past.json) ---------- */
+const PAST=[["BUET","2017-18","ডট গুণন","উপাংশ থেকে দুটি ভেক্টরের মধ্যবর্তী কোণ","t:angcos"],["DU","2009-10","ডট গুণন","উপাংশ থেকে দুটি ভেক্টরের মধ্যবর্তী কোণ","t:angcos"],["DU","2008-09","ডট গুণন","অজানা মান, যাতে ভেক্টর দুটি লম্ব হয়","t:perp"],["BUET","2003-04","নদী-নৌকা ও আপেক্ষিক বেগ","নদী: ঠিক বিপরীত বিন্দুতে পৌঁছাতে সাঁতারুর দিক","t:riverdir"],["BUET","2006-07","নদী-নৌকা ও আপেক্ষিক বেগ","বাতাসসহ বৃষ্টি: ছাতা ধরার কোণ","t:wind"],["RUET","2004-05","নদী-নৌকা ও আপেক্ষিক বেগ","বাতাসসহ বৃষ্টি: গাড়ির কোন বেগে কাচ ভিজবে","t:carglass"],["DU","2018-19","ভেক্টর যোগ ও লব্ধি","সমান দুটি বলের লব্ধি একটি বলের সমান: মধ্যবর্তী কোণ","b:সমান মানের দুটি ভেক্টরের লব্ধির মানও একই"],["DU","2017-18","ভেক্টর যোগ ও লব্ধি","{A} + {B} = {C}, মান 12, 5, 13: {A} ও {B} এর মধ্যবর্তী কোণ","t:abc"],["CUET","2015-16","ভেক্টর যোগ ও লব্ধি","সর্বোচ্চ ও সর্বনিম্ন লব্ধি থেকে লম্ব অবস্থায় লব্ধি","t:maxmin"],["KUET","2017-18","ডট ও ক্রস একসাথে","ডট ও ক্রস গুণনের মান থেকে মধ্যবর্তী কোণ","t:tan"],["DU","2004-05","ভেক্টর যোগ ও লব্ধি","চিত্র থেকে ভেক্টর যোগের ত্রিভুজ সূত্র","b:{AB} + {BC} + {CA}"],["BUET","2010-11","উপাংশ ও একক ভেক্টর","লন রোলার: টানা ও ঠেলায় আপাত ওজন","t:roller"],["DU","2010-11","ভেক্টর যোগ ও লব্ধি","লব্ধি 40 N, ছোট বল 30 N লব্ধির লম্ব: বড় বলের মান","t:perpres"],["BUET","2007-08","ডট গুণন","({A} + {B}) ও ({A} − {B}) এর মধ্যবর্তী কোণ","b:যোগফল ({A} + {B})"],["JU","2015-16","উপাংশ ও একক ভেক্টর","লন রোলার: টানা ও ঠেলায় পার্থক্য","t:rollerdiff"],["JU","2013-14","ভেক্টর যোগ ও লব্ধি","সমান দুটি ভেক্টরের লব্ধি 10√2: মধ্যবর্তী কোণ","t:eqres"],["SUST","2007-08","নদী-নৌকা ও আপেক্ষিক বেগ","স্রোতের দ্বিগুণ বেগের সাঁতারু সোজা পার হলে তীরের সাথে কোণ","t:riverdir"],["BUET","2005-06","উপাংশ ও একক ভেক্টর","উত্তর ও পূর্বমুখী উপাংশ (5, 12) থেকে বাতাসের বেগ","t:comp2"],["RU","2016-17","ক্রস গুণন","{C} = {A} × {B} এর দিক","b:{C} = {A} × {B} হলে {C} এর দিক"],["SUST","2014-15","ডট ও ক্রস একসাথে","ডট ও ক্রস গুণনের মান থেকে মধ্যবর্তী কোণ","t:tan"],["KU","2008-09","ক্রস গুণন","30° কোণে ক্রস গুণনের মান","t:crossmag"],["BUET","2007-08","ক্রস গুণন","দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল","t:area"],["DU","2018-19","ক্রস গুণন","{a} + {b} + {c} = 0 (মান 4, 3, 5) হলে |{c} × ({a} × {b})|","b:|{c} × ({a} × {b})|"],["CUET","2014-15","ক্রস গুণন","দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল","t:area"],["CUET","2005-06","উপাংশ ও একক ভেক্টর","বিন্দুর অবস্থান ভেক্টর ও দুই বিন্দুর সংযোজক ভেক্টর","t:join"],["CUET","2003-04","নদী-নৌকা ও আপেক্ষিক বেগ","নদী: পার হওয়ার সময় থেকে প্রস্থ","t:riverwidth"],["CUET","2004-05","নদী-নৌকা ও আপেক্ষিক বেগ","নদী: সোজা পার হওয়ার দিক ও সময়","t:rstraight"],["BUET","2015-16","নদী-নৌকা ও আপেক্ষিক বেগ","নদী: অনুকূল ও প্রতিকূল বেগ থেকে নৌকা ও স্রোতের বেগ","t:downup"],["BUET","2006-07","ভেক্টর যোগ ও লব্ধি","{A} + {B} = {C}, মান 12, 5, 13: {A} ও {B} এর মধ্যবর্তী কোণ","t:abc"],["CUET","2013-14","নদী-নৌকা ও আপেক্ষিক বেগ","নদী: পার হওয়ার সময় ও লব্ধি বেগ","t:riverres"],["KUET","2016-17","ডট গুণন","উপাংশ থেকে দুটি ভেক্টরের মধ্যবর্তী কোণ","t:angcos"],["BUET","2010-11","ক্রস গুণন","অজানা মান, যাতে ভেক্টর দুটি সমান্তরাল হয়","t:par"],["BUET","2000-01","ডট গুণন","একটি ভেক্টরের ওপর অন্যটির অভিক্ষেপ","t:proj"],["BUET","2009-10","ডট গুণন","একটি ভেক্টরের ওপর অন্যটির অভিক্ষেপ","t:proj"],["DU","2000-01","ডট গুণন","অজানা মান, যাতে ভেক্টর দুটি লম্ব হয়","t:perp"],["JU","2016-17","ডট গুণন","একটি ভেক্টরের ওপর অন্যটির অভিক্ষেপ","t:proj"],["BUET","2006-07","ক্রস গুণন","দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল","t:area"],["RUET","2014-15","ক্রস গুণন","দুটি বাহু থেকে সামান্তরিকের ক্ষেত্রফল","t:area"],["SUST","2016-17","ক্রস গুণন","উপাংশ থেকে {A} × {B}","t:cross3"],["DU","2007-08","ভেক্টর যোগ ও লব্ধি","দুটি লম্ব ভেক্টরের লব্ধির দিক","t:comp2"],["KUET","2014-15","ক্রস গুণন","কর্ণ থেকে সামান্তরিকের ক্ষেত্রফল","t:diag"],["BUET","2012-13","ডট গুণন","অজানা মান, যাতে কাজ শূন্য হয়","t:work0"],["BUET","2013-14","উপাংশ ও একক ভেক্টর","বলের ভেক্টর থেকে মান, তারপর ত্বরণ","t:forceacc"],["RU","2015-16","ডট গুণন","অজানা মান, যাতে কাজ শূন্য হয়","t:work0"],["KUET","2015-16","ডট গুণন","দুই বিন্দুর মধ্যে ধ্রুব বলের কাজ","t:workpts"],["RUET","2015-16","ভেক্টর ক্যালকুলাস","অজানা মান, যাতে ভেক্টর ক্ষেত্র সলিনয়ডাল হয়","t:solen"]];
+function pastQ(k){if(k.startsWith('t:'))return fromTpl(TPL[TI[k.slice(2)]]);const b=BANK.find(x=>x.q.includes(k.slice(2)));return fromBank(b)}
+
+/* each slot draws a topic by its admission share (weak topics ×3), then a bank question or a template from it; a drawn topic's share shrinks so tests stay varied */
+function makeTest(n,weak,seen){
+ if(n==='all')return shuffle(BANK.map(fromBank).concat(TPL.map(fromTpl)));
+ seen=seen||{b:new Set(),t:new Set()};
+ const wk=weak||{},w={};for(const t in TW)w[t]=TW[t]*(wk[t]?3:1);
+ const uB=new Set(),uT=new Set(),qs=[];let guard=0;
+ while(qs.length<n&&guard++<500){
+  const keys=Object.keys(w).filter(t=>w[t]>0);if(!keys.length)break;
+  let r=Math.random()*keys.reduce((s,t)=>s+w[t],0),t=keys[keys.length-1];for(const k of keys){r-=w[k];if(r<0){t=k;break}}
+  const b=BANK.map((_,i)=>i).filter(i=>BANK[i].t===t&&!uB.has(i)),all=TT.map((_,i)=>i).filter(i=>TT[i]===t),tp=all.filter(i=>!uT.has(i));
+  if(tp.length&&(!b.length||Math.random()<0.45)){const tu=tp.filter(i=>!seen.t.has(i)),i=pick(tu.length?tu:tp);uT.add(i);qs.push(fromTpl(TPL[i]))}
+  else if(b.length){const bu=b.filter(i=>!seen.b.has(i)),i=pick(bu.length?bu:b);uB.add(i);qs.push(fromBank(BANK[i]))}
+  else if(all.length)qs.push(fromTpl(TPL[pick(all)]));
+  else{w[t]=0;continue}
+  w[t]*=0.7}
+ return shuffle(qs)}
+
+if(typeof module!=='undefined'){module.exports={makeTest,BANK,TPL,fromTpl};}
+
+/* ---------- UI ---------- */
+if(typeof document!=='undefined'){
+const $=id=>document.getElementById(id);const L=['ক','খ','গ','ঘ'];
+const S={mode:'practice',n:15,qs:[],ans:{},done:false,timer:null,left:0,weak:{},code:'',seen:{b:new Set(),t:new Set()}};
+
+$('opt-all').textContent=`পূর্ণ অধ্যায় টেস্ট (${bn(BANK.length+TPL.length)}টি, প্রতিটি ধরন একবার)`;
+$('how').innerHTML=`<ol class="steps"><li><b>মোড বাছো।</b> অনুশীলন: প্রতিটি উত্তর দেওয়ার সাথে সাথে সঠিক না ভুল আর কেন, দেখাবে। পরীক্ষা: টাইমার চলবে, উত্তর শেষে দেখাবে, প্রতিটি ভুলে −০.২৫।</li><li><b>কয়টি প্রশ্ন বাছো।</b> “পূর্ণ অধ্যায় টেস্ট” এ অধ্যায়ের প্রতিটি ধরনের প্রশ্ন একবার করে আসে।</li><li><b>নিচে নেমে উত্তর দাও:</b> ক, খ, গ বা ঘ চাপো। শেষে “ফলাফল দেখো” চাপলে কোন অংশে দুর্বল তা দেখাবে।</li><li><b>“পরের টেস্ট”</b> চাপলে নতুন প্রশ্ন আসবে; দুর্বল অংশ আর আগে না দেখা প্রশ্ন আগে আসবে।</li></ol>`;
+
+function newTest(){clearInterval(S.timer);if(S.seen.b.size+S.seen.t.size>=BANK.length+TPL.length-6){S.seen.b.clear();S.seen.t.clear()}S.qs=makeTest(S.n,S.weak,S.seen);S.qs.forEach(q=>{if(q.bi>=0)S.seen.b.add(q.bi);if(q.ti>=0)S.seen.t.add(q.ti)});S.ans={};S.done=false;S.code=Math.random().toString(16).slice(2,6).toUpperCase();
+ $('result').hidden=true;$('submit').textContent=S.mode==='exam'?'জমা দাও':'ফলাফল দেখো';$('submit').hidden=false;
+ S.timer=null;if(S.mode==='exam'){S.left=S.qs.length*45;$('timer').hidden=false;tick();if(!$('v-test').hidden)startTimer()}else $('timer').hidden=true;
+ renderAll()}
+function startTimer(){if(S.mode!=='exam'||S.done||S.timer)return;S.timer=setInterval(()=>{S.left--;tick();if(S.left<=0)finish()},1000)}
+function tick(){const m=Math.floor(Math.max(S.left,0)/60),s=Math.max(S.left,0)%60;$('timer').textContent='⏱ '+bn(String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'));$('timer').classList.toggle('low',S.left<60)}
+const reveal=i=>S.done||(S.mode==='practice'&&S.ans[i]!==undefined);
+
+function card(q,i){const a=S.ans[i],rv=reveal(i);
+ const opts=q.opts.map((o,k)=>{let c='opt';if(rv){if(o.ok)c+=' right';else if(a===k)c+=' wrong'}else if(a===k)c+=' sel';
+  return`<button class="${c}" data-q="${i}" data-o="${k}" ${rv?'disabled':''} aria-label="${L[k]}"><span class="bub">${L[k]}</span><span>${render(o.h)}</span></button>`}).join('');
+ let fb='';if(rv){const ci=q.opts.findIndex(o=>o.ok),co=q.opts[ci];
+  if(a===undefined)fb=`<div class="fb skip"><b class="v">উত্তর দাওনি।</b> সঠিক উত্তর: (${L[ci]}) ${render(co.h)}<span class="why">${render(q.exp)}</span></div>`;
+  else if(q.opts[a].ok)fb=`<div class="fb ok"><b class="v">সঠিক।</b><span class="why">${render(q.exp)}</span></div>`;
+  else{const n=q.opts[a].note;fb=`<div class="fb bad"><b class="v">ভুল।</b> ${n?'<span class="why"><b>তোমার ভুলটা কোথায়:</b> '+render(n)+'</span>':''}<span class="why"><b>সঠিক উত্তর:</b> (${L[ci]}) ${render(co.h)}</span><span class="why">${render(q.exp)}</span></div>`}}
+ return`<article class="q" id="q${i}"><div class="qn">${bn(String(i+1).padStart(2,'0'))}</div><div class="meta"><span class="chip">${q.topic}</span>${q.src==='tpl'?'<span class="chip tpl">নতুন সংখ্যা</span>':''}</div><div class="qt">${render(q.text)}</div><div class="opts">${opts}</div>${fb}</article>`}
+
+function renderAll(){$('list').innerHTML=S.qs.map(card).join('');status()}
+function status(){const n=S.qs.length,done=Object.keys(S.ans).length;let ok=0,bad=0;
+ for(const[i,a]of Object.entries(S.ans)){if(S.qs[i].opts[a].ok)ok++;else bad++}
+ $('code').textContent='টেস্ট কোড '+S.code;
+ $('tally').innerHTML=`<span>উত্তর ${bn(done)}/${bn(n)}</span>`+((S.mode==='practice'||S.done)?`<span class="t-ok">✓ ${bn(ok)}</span><span class="t-bad">✗ ${bn(bad)}</span>`:'')}
+
+function finish(){if(S.done)return;clearInterval(S.timer);S.done=true;renderAll();
+ const n=S.qs.length;let ok=0,bad=0;const T={};
+ S.qs.forEach((q,i)=>{T[q.topic]=T[q.topic]||{c:0,n:0};T[q.topic].n++;const a=S.ans[i];if(a===undefined)return;if(q.opts[a].ok){ok++;T[q.topic].c++}else bad++});
+ const skip=n-ok-bad,marks=ok-bad*0.25;
+ const rows=Object.entries(T).sort((x,y)=>x[1].c/x[1].n-y[1].c/y[1].n);
+ S.weak={};rows.forEach(([t,v])=>{if(v.c/v.n<0.6)S.weak[t]=1});
+ const wk=Object.keys(S.weak);
+ $('result').innerHTML=`<h2>ফলাফল</h2><div class="code">টেস্ট কোড ${S.code} · ${S.mode==='exam'?'পরীক্ষা মোড':'অনুশীলন মোড'}</div>
+ <div class="score"><div><small>সঠিক</small><strong class="t-ok">${bn(ok)}</strong></div><div><small>ভুল</small><strong class="t-bad">${bn(bad)}</strong></div><div><small>উত্তর দাওনি</small><strong>${bn(skip)}</strong></div><div><small>নম্বর (ভুলে −০.২৫)</small><strong>${bn(fm(marks))} / ${bn(n)}</strong></div></div>
+ <div class="topics">${rows.map(([t,v])=>{const r=v.c/v.n;return`<span>${t}</span><span class="meter"><i class="${r<0.6?'weak':''}" style="width:${Math.round(r*100)}%"></i></span><span class="n">${bn(v.c)}/${bn(v.n)}</span>`}).join('')}</div>
+ <div class="next">${wk.length?`দুর্বল অংশ: <b>${wk.join(', ')}</b>। “পরের টেস্ট” চাপলে এই অংশ থেকে বেশি প্রশ্ন আসবে।`:'সব অংশে ভালো করেছ। পরের টেস্টে নতুন প্রশ্ন ও নতুন সংখ্যা আসবে।'}</div>
+ <div class="next">এ পর্যন্ত দেখা হয়েছে <b>${bn(S.seen.b.size+S.seen.t.size)}/${bn(BANK.length+TPL.length)}</b> ধরনের প্রশ্ন। পরের টেস্টে বাকিগুলো আগে আসবে।</div>
+ <div style="margin-top:14px"><button class="btn" id="next-test">পরের টেস্ট →</button></div>`;
+ $('next-test').onclick=()=>{newTest();window.scrollTo({top:0,behavior:'smooth'})};
+ $('result').hidden=false;$('submit').hidden=true;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+
+$('list').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||b.disabled||S.done)return;const i=+b.dataset.q,k=+b.dataset.o;
+ if(S.mode==='practice'&&S.ans[i]!==undefined)return;S.ans[i]=k;$('q'+i).outerHTML=card(S.qs[i],i);status();
+ if(S.mode==='practice'&&Object.keys(S.ans).length===S.qs.length)finish()});
+/* ---------- past questions ---------- */
+const PS={uni:'',year:0,q:{},a:{}};
+const unis=Object.entries(PAST.reduce((m,r)=>(m[r[0]]=(m[r[0]]||0)+1,m),{})).sort((x,y)=>y[1]-x[1]);
+$('past-intro').innerHTML=`২০০০–২০১৯ সালের ভর্তি পরীক্ষায় এই অধ্যায় থেকে কোন ধরনের প্রশ্ন এসেছিল, তার তালিকা। প্রতিটির নিচে <b>একই ধরনের অনুশীলন প্রশ্ন</b> আছে, নতুন সংখ্যায়। এটি মূল প্রশ্ন হুবহু নয়।`;
+function renderPast(){
+ $('pf-uni').innerHTML=[['','সব',PAST.length],...unis.map(([u,c])=>[u,u,c])].map(([v,l,c])=>`<button data-uni="${v}" aria-pressed="${PS.uni===v}">${l} ${bn(c)}</button>`).join('');
+ const rows=PAST.map((r,i)=>[r,i]).filter(([r])=>(!PS.uni||r[0]===PS.uni)&&(!PS.year||(+r[1].slice(0,4)>=PS.year&&+r[1].slice(0,4)<PS.year+5))).sort((x,y)=>y[0][1].localeCompare(x[0][1]));
+ $('pf-count').textContent=`${bn(rows.length)}টি প্রশ্ন`;
+ $('past-list').innerHTML=rows.map(([r,i])=>`<article class="pq"><div class="ph"><span class="uni">${r[0]}</span><span class="code">${bn(r[1])}</span><span class="chip">${r[2]}</span></div><div class="pt">${render(r[3])}</div><button class="btn ghost sm" data-pp="${i}">${PS.q[i]?'আরেকটি দাও':'এই ধরনের প্রশ্ন অনুশীলন করো'}</button><div class="pp" id="pp${i}">${PS.q[i]?pcard(i):''}</div></article>`).join('')||'<p class="code">এই ফিল্টারে কোনো প্রশ্ন নেই।</p>'}
+function pcard(i){const q=PS.q[i],a=PS.a[i],rv=a!==undefined;
+ const opts=q.opts.map((o,k)=>{let c='opt';if(rv){if(o.ok)c+=' right';else if(a===k)c+=' wrong'}return`<button class="${c}" data-pi="${i}" data-po="${k}" ${rv?'disabled':''}><span class="bub">${L[k]}</span><span>${render(o.h)}</span></button>`}).join('');
+ let fb='';if(rv){const ci=q.opts.findIndex(o=>o.ok);fb=q.opts[a].ok?`<div class="fb ok"><b class="v">সঠিক।</b><span class="why">${render(q.exp)}</span></div>`:`<div class="fb bad"><b class="v">ভুল।</b> ${q.opts[a].note?'<span class="why"><b>তোমার ভুলটা কোথায়:</b> '+render(q.opts[a].note)+'</span>':''}<span class="why"><b>সঠিক উত্তর:</b> (${L[ci]}) ${render(q.opts[ci].h)}</span><span class="why">${render(q.exp)}</span></div>`}
+ return`<div class="q"><div class="qn">অনু</div><div class="meta">${q.src==='tpl'?'<span class="chip tpl">নতুন সংখ্যা</span>':'<span class="chip">একই ধরন</span>'}</div><div class="qt">${render(q.text)}</div><div class="opts">${opts}</div>${fb}</div>`}
+$('pf-uni').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;PS.uni=b.dataset.uni;renderPast()});
+$('pf-year').onchange=e=>{PS.year=+e.target.value;renderPast()};
+$('past-list').addEventListener('click',e=>{const g=e.target.closest('[data-pp]');if(g){const i=+g.dataset.pp;PS.q[i]=pastQ(PAST[i][4]);delete PS.a[i];$('pp'+i).innerHTML=pcard(i);g.textContent='আরেকটি দাও';return}
+ const o=e.target.closest('[data-pi]');if(!o||o.disabled)return;const i=+o.dataset.pi;PS.a[i]=+o.dataset.po;$('pp'+i).innerHTML=pcard(i)});
+
+/* ---------- learning part ---------- */
+const RULES=["{A}·{B} = 0 হলে ভেক্টর দুটি পরস্পর লম্ব (θ = 90°)।","{A} × {B} = 0 হলে ভেক্টর দুটি সমান্তরাল বা বিপরীত সমান্তরাল (θ = 0° বা 180°)।","দুটি ভেক্টরের লব্ধি সবসময় |A − B| ≤ R ≤ A + B সীমার মধ্যে থাকে।","লব্ধি সর্বোচ্চ θ = 0° তে (R = A + B), সর্বনিম্ন θ = 180° তে (R = |A − B|)।","সমান মানের দুটি ভেক্টরের লব্ধি তাদের মধ্যবর্তী কোণকে সমদ্বিখণ্ডিত করে।","ভেক্টর যোগ বিনিময় ও সংযোগ নিয়ম মানে: {A} + {B} = {B} + {A}।","ডট গুণন বিনিময় নিয়ম মানে; ক্রস গুণন মানে না: {A} × {B} = −{B} × {A}।","[i]·[i] = [j]·[j] = [k]·[k] = 1, কিন্তু [i]·[j] = [j]·[k] = [k]·[i] = 0।","[i] × [j] = [k], [j] × [k] = [i], [k] × [i] = [j]; ক্রম উল্টালে চিহ্ন ঋণাত্মক। [i] × [i] = 0।","{A} × {B} সবসময় {A} ও {B} উভয়ের ওপর লম্ব; দিক ডানহাতি স্ক্রু নিয়মে।","তিনটি ভেক্টর সমতলীয় হলে {A}·({B} × {C}) = 0।","তিনটি ভেক্টর ক্রমানুসারে একটি ত্রিভুজের তিন বাহু নির্দেশ করলে তাদের লব্ধি শূন্য।","সমান্তরাল হওয়ার শর্ত: A<sub>x</sub>/B<sub>x</sub> = A<sub>y</sub>/B<sub>y</sub> = A<sub>z</sub>/B<sub>z</sub>। লম্ব হওয়ার শর্ত: A<sub>x</sub>B<sub>x</sub> + A<sub>y</sub>B<sub>y</sub> + A<sub>z</sub>B<sub>z</sub> = 0। অজানা m বের করার প্রশ্ন এই দুটি থেকেই আসে।","বল ও সরণ পরস্পর লম্ব হলে কাজ শূন্য: {F}·{s} = 0।","tanθ = |{A} × {B}| / ({A}·{B})। দুটির মান সমান হলে θ = 45°।","সামান্তরিকের ক্ষেত্রফল: বাহু দেওয়া থাকলে |{A} × {B}|, কর্ণ দেওয়া থাকলে ½|{d₁} × {d₂}|।","{A} × ({B} × {C}) = {B}({A}·{C}) − {C}({A}·{B}) (“BAC − CAB”); ফলটি {B} ও {C} এর তলে থাকে।","দিক কোসাইন: cos²α + cos²β + cos²γ = 1।","লন রোলার টানলে আপাত ওজন কমে (mg − F sinθ), ঠেললে বাড়ে (mg + F sinθ); তাই টানা সহজ।","বৃষ্টি থেকে বাঁচতে ছাতা হেলাতে হয় বৃষ্টির আপেক্ষিক বেগ যেদিক থেকে আসে সেদিকে: {v}<sub>বৃষ্টি</sub> − {v}<sub>লোক</sub>।","{v} = d{r}/dt, {a} = d{v}/dt। ধ্রুবক পদের অন্তরজ শূন্য।","∇·{V} = 0 হলে ক্ষেত্র সলিনয়ডাল; ∇ × {V} = 0 হলে অঘূর্ণনশীল (সংরক্ষণশীল)। ভর্তি পরীক্ষায় এ অংশ থেকে প্রশ্ন খুব কম আসে।","ন্যূনতম সময়ে নদী পার হতে স্রোতের সাথে 90° কোণে চালাতে হয়; ন্যূনতম দূরত্বে পার হতে স্রোতের বিপরীতে হেলিয়ে চালাতে হয় (শর্ত: v > u)।"];
+const DEFS=[["স্কেলার রাশি","যে রাশির শুধু মান আছে, দিক নেই। যেমন: ভর, দৈর্ঘ্য, কাজ, শক্তি, তাপমাত্রা।"],["ভেক্টর রাশি","যে রাশির মান ও দিক উভয়ই আছে এবং যা ভেক্টর যোগের সূত্র মেনে চলে। যেমন: সরণ, বেগ, বল।"],["সমান ভেক্টর","যে ভেক্টরগুলোর মান ও দিক একই।"],["বিপরীত ভেক্টর","যে দুটি ভেক্টরের মান সমান কিন্তু দিক বিপরীত।"],["শূন্য ভেক্টর","যে ভেক্টরের মান শূন্য; এর দিক অনির্দিষ্ট।"],["একক ভেক্টর","যে ভেক্টরের মান 1 এবং কোনো একক নেই; এটি শুধু দিক নির্দেশ করে। [A] = {A}/|{A}|"],["সমরেখ ভেক্টর","একই রেখা বা সমান্তরাল রেখা বরাবর ক্রিয়াশীল ভেক্টর।"],["সমতলীয় ভেক্টর","একই সমতলে অবস্থিত ভেক্টর।"],["অবস্থান ভেক্টর","মূলবিন্দু থেকে কোনো বিন্দু পর্যন্ত অঙ্কিত ভেক্টর: {r} = x[i] + y[j] + z[k]।"],["সরণ ভেক্টর","একটি বিন্দু থেকে অন্য বিন্দুতে অবস্থানের পরিবর্তন নির্দেশকারী ভেক্টর।"],["পোলার ভেক্টর","যে ভেক্টরের একটি প্রয়োগবিন্দু থাকে এবং যা রৈখিক দিকে ক্রিয়া করে। যেমন: সরণ, বেগ, বল।"],["অক্ষীয় ভেক্টর","যে ভেক্টর ঘূর্ণন অক্ষ বরাবর ক্রিয়া করে। যেমন: কৌণিক বেগ, টর্ক, কৌণিক ভরবেগ।"],["লব্ধি","একাধিক ভেক্টরের সম্মিলিত ক্রিয়া যে একটি ভেক্টর দিয়ে প্রকাশ করা যায়।"],["ভেক্টরের বিভাজন","একটি ভেক্টরকে একাধিক ভেক্টরে ভাগ করা, যাদের লব্ধি মূল ভেক্টরের সমান। ভাগগুলোকে উপাংশ বলে।"],["আয়তাকার উপাংশ","পরস্পর লম্ব দিক বরাবর কোনো ভেক্টরের উপাংশ।"],["ডট (স্কেলার) গুণন","দুটি ভেক্টরের মান ও মধ্যবর্তী কোণের কোসাইনের গুণফল: {A}·{B} = AB cosθ। ফল স্কেলার।"],["ক্রস (ভেক্টর) গুণন","{A} × {B} = AB sinθ [n], যেখানে [n] উভয় ভেক্টরের তলের লম্ব একক ভেক্টর। ফল ভেক্টর।"],["দিক কোসাইন","কোনো ভেক্টর x, y, z অক্ষের সাথে যে কোণ α, β, γ উৎপন্ন করে, তাদের কোসাইন: l = A<sub>x</sub>/A, m = A<sub>y</sub>/A, n = A<sub>z</sub>/A।"],["আপেক্ষিক বেগ","B এর সাপেক্ষে A এর বেগ: {v}<sub>AB</sub> = {v}<sub>A</sub> − {v}<sub>B</sub>।"],["স্কেলার ত্রিগুণন","{A}·({B} × {C}); তিনটি ভেক্টর দিয়ে গঠিত সামান্তরিক ষড়তলকের আয়তন। সমতলীয় হলে শূন্য।"],["ভেক্টর ত্রিগুণন","{A} × ({B} × {C}) = {B}({A}·{C}) − {C}({A}·{B})। ফল ভেক্টর।"],["ন্যাবলা (∇)","ভেক্টর ডিফারেনশিয়াল অপারেটর: ∇ = [i] ∂/∂x + [j] ∂/∂y + [k] ∂/∂z।"],["গ্রেডিয়েন্ট","স্কেলার ক্ষেত্রের ওপর ∇ প্রয়োগ: ∇φ। ফল ভেক্টর, যা φ এর সর্বোচ্চ বৃদ্ধির দিক নির্দেশ করে।"],["ডাইভারজেন্স","∇ ও ভেক্টর ক্ষেত্রের ডট গুণন: ∇·{V}। ফল স্কেলার; কোনো বিন্দু থেকে ক্ষেত্রের নির্গমনের পরিমাপ।"],["কার্ল","∇ ও ভেক্টর ক্ষেত্রের ক্রস গুণন: ∇ × {V}। ফল ভেক্টর; ক্ষেত্রের ঘূর্ণনের পরিমাপ।"]];
+const ONE=[["দুটি সমান মানের ভেক্টরের লব্ধি শূন্য হলে মধ্যবর্তী কোণ কত?","180°"],["সমান মানের দুটি ভেক্টরের লব্ধি একটির মানের সমান হলে মধ্যবর্তী কোণ কত?","120°"],["P মানের দুটি ভেক্টর পরস্পর লম্ব হলে লব্ধি কত?","P√2"],["P মানের দুটি ভেক্টর 60° কোণে থাকলে লব্ধি কত?","P√3"],["3 N ও 4 N বলের সর্বোচ্চ ও সর্বনিম্ন লব্ধি কত?","7 N ও 1 N"],["একটি ভেক্টরকে কয়টি উপাংশে ভাগ করা যায়?","অসংখ্য"],["ত্রিমাত্রিক স্থানে আয়তাকার উপাংশ কয়টি?","3টি"],["শূন্য ভেক্টরের দিক কেমন?","অনির্দিষ্ট"],["[i]·[i] = ?","1"],["[i] × [i] = ?","0 (শূন্য ভেক্টর)"],["[k] × [j] = ?","−[i]"],["{A}·{A} = ?","A²"],["{r} = x[i] + y[j] + z[k] হলে ∇·{r} = ?","3"],["{A} = 2[i] + 3[j] − [k] ও {B} = 4[i] + m[j] − 2[k] সমান্তরাল হলে m = ?","6"],["বল ও সরণ লম্ব হলে কাজ কত?","শূন্য"],["|{A} × {B}| = {A}·{B} হলে মধ্যবর্তী কোণ কত?","45°"],["|{A} × {B}| / ({A}·{B}) = ?","tanθ"],["কর্ণ {d₁} ও {d₂} দেওয়া থাকলে সামান্তরিকের ক্ষেত্রফল কত?","½|{d₁} × {d₂}|"],["{A} × ({B} × {C}) = ?","{B}({A}·{C}) − {C}({A}·{B})"],["cos²α + cos²β + cos²γ = ?","1"],["লন রোলার টানা সহজ না ঠেলা?","টানা সহজ"],["বৃষ্টি খাড়া পড়লে চলন্ত গাড়ির জানালায় দাগ কেমন হয়?","তির্যক, নিচের দিকে পেছনে হেলানো"],["{r} = t²[i] + 3t[j] হলে t = 2 s এ বেগের মান?","5 m s⁻¹"],["ডাইভারজেন্স শূন্য হলে ক্ষেত্রকে কী বলে?","সলিনয়ডাল"],["কার্ল শূন্য হলে ক্ষেত্রকে কী বলে?","অঘূর্ণনশীল বা সংরক্ষণশীল"],["কাজ কোন গুণনের ফল?","ডট গুণন: W = {F}·{s}"],["টর্ক কোন গুণনের ফল?","ক্রস গুণন: {τ} = {r} × {F}"],["তড়িৎ প্রবাহ স্কেলার না ভেক্টর?","স্কেলার"],["কৌণিক বেগ কোন ধরনের ভেক্টর?","অক্ষীয় ভেক্টর"],["|{A} × {B}| জ্যামিতিকভাবে কী নির্দেশ করে?","{A} ও {B} দ্বারা গঠিত সামান্তরিকের ক্ষেত্রফল"],["{A} × {B} এর দিক কোন দিকে?","{A} ও {B} এর তলের লম্ব বরাবর"],["ন্যূনতম সময়ে নদী পার হতে স্রোতের সাথে কত কোণে চালাতে হয়?","90°"],["বৃষ্টি খাড়াভাবে পড়লে সামনে হাঁটার সময় ছাতা কীভাবে ধরতে হয়?","সামনের দিকে হেলিয়ে"]];
+const SHORT=[["ডট গুণনের ফল স্কেলার কেন?","{A}·{B} = AB cosθ। এখানে দুটি ভেক্টরের মান ও কোণের কোসাইন গুণ হয়, যাদের কোনোটিরই দিক নেই। তাই গুণফলেরও কোনো দিক থাকে না, ফলে এটি স্কেলার।"],["তড়িৎ প্রবাহের দিক থাকলেও এটি স্কেলার কেন?","ভেক্টর হতে হলে ভেক্টর যোগের সূত্র মানতে হয়। কোনো সংযোগস্থলে প্রবাহগুলো তারের মধ্যবর্তী কোণ বিবেচনা না করেই সরাসরি বীজগাণিতিকভাবে যোগ হয়। তাই তড়িৎ প্রবাহ স্কেলার।"],["অসমান মানের দুটি ভেক্টরের লব্ধি শূন্য হতে পারে না কেন?","দুটি ভেক্টরের সর্বনিম্ন লব্ধি |A − B|। A ≠ B হলে এটি কখনো শূন্য হয় না। লব্ধি শূন্য হতে হলে মান সমান ও দিক বিপরীত হতে হবে।"],["তিনটি অসমতলীয় ভেক্টরের লব্ধি শূন্য হতে পারে না কেন?","যেকোনো দুটি ভেক্টরের লব্ধি তাদের সমতলেই থাকে। তৃতীয় ভেক্টর এই লব্ধিকে বাতিল করতে হলে এর সমান ও বিপরীত হতে হবে, অর্থাৎ একই সমতলে থাকতে হবে। তাই অসমতলীয় হলে লব্ধি শূন্য হয় না।"],["ক্রস গুণন বিনিময় নিয়ম মানে না কেন?","ক্রস গুণনের দিক ডানহাতি স্ক্রু নিয়মে ঠিক হয়। ক্রম উল্টালে স্ক্রুর ঘোরার দিক উল্টে যায়, তাই মান একই থাকলেও দিক বিপরীত হয়: {A} × {B} = −{B} × {A}।"],["একক ভেক্টরের কোনো একক নেই কেন?","[A] = {A}/|{A}|। লব ও হর দুটোই একই এককে প্রকাশিত, তাই ভাগ করলে একক বাতিল হয়ে যায় এবং শুধু দিক থেকে যায়।"],["ন্যূনতম সময়ে নদী পার হলে নৌকা ভাটির দিকে সরে যায় কেন?","নৌকা স্রোতের সাথে লম্বভাবে চললে স্রোতের বেগ বাতিল করার মতো কোনো উপাংশ থাকে না। তাই পার হওয়ার পুরো সময় t জুড়ে স্রোত নৌকাকে u × t দূরত্ব ভাটিতে সরিয়ে দেয়।"],["লন রোলার ঠেলার চেয়ে টানা সহজ কেন?","হাতলে প্রযুক্ত বল F অনুভূমিকের সাথে θ কোণে থাকে। টানলে উল্লম্ব উপাংশ F sinθ ওপরের দিকে, তাই অভিলম্ব প্রতিক্রিয়া N = mg − F sinθ কমে যায়। ঠেললে উপাংশটি নিচের দিকে, N = mg + F sinθ। ঘর্ষণ N এর সমানুপাতিক, তাই টানলে ঘর্ষণ কম।"],["বাতাসসহ বৃষ্টিতে ছাতা কোন দিকে হেলাতে হবে, কীভাবে বুঝবে?","লোকের সাপেক্ষে বৃষ্টির আপেক্ষিক বেগ বের করো: {v}<sub>বৃষ্টি</sub> − {v}<sub>লোক</sub>। এর অনুভূমিক অংশ যেদিকে যাচ্ছে, বৃষ্টি তার উল্টো দিক থেকে আসছে; ছাতা সেদিকেই হেলাতে হয়। লোক বাতাসের সমান বেগে একই দিকে হাঁটলে অনুভূমিক অংশ শূন্য, তখন ছাতা খাড়া।"],["বল প্রয়োগে সরণ হলেও কাজ শূন্য হতে পারে কেন?","W = Fs cosθ। বল ও সরণ পরস্পর লম্ব হলে cos90° = 0, তাই কাজ শূন্য। যেমন বৃত্তাকার পথে ঘোরা বস্তুর ওপর কেন্দ্রমুখী বল সবসময় বেগের লম্ব, তাই এটি কোনো কাজ করে না।"],["কাজ ও টর্কের মাত্রা এক হলেও তারা ভিন্ন রাশি কেন?","দুটির মাত্রাই [ML²T⁻²]। কিন্তু কাজ বল ও সরণের ডট গুণন, তাই স্কেলার; টর্ক অবস্থান ভেক্টর ও বলের ক্রস গুণন, তাই ভেক্টর। একই মাত্রা মানেই একই রাশি নয়।"]];
+const UNITS=[["সরণ","ভেক্টর","m","L"],["বেগ","ভেক্টর","m s⁻¹","LT⁻¹"],["ত্বরণ","ভেক্টর","m s⁻²","LT⁻²"],["বল","ভেক্টর","N (kg m s⁻²)","MLT⁻²"],["ভরবেগ","ভেক্টর","kg m s⁻¹","MLT⁻¹"],["কাজ (F·s)","স্কেলার","J","ML²T⁻²"],["টর্ক (r × F)","অক্ষীয় ভেক্টর","N m","ML²T⁻²"],["ক্ষমতা (F·v)","স্কেলার","W","ML²T⁻³"],["কৌণিক বেগ","অক্ষীয় ভেক্টর","rad s⁻¹","T⁻¹"],["কৌণিক ভরবেগ","অক্ষীয় ভেক্টর","kg m² s⁻¹","ML²T⁻¹"],["একক ভেক্টর","ভেক্টর","নেই","মাত্রাহীন"],["ন্যাবলা (∇)","ভেক্টর অপারেটর","m⁻¹","L⁻¹"]];
+const FORM=[{"h":"দুটি ভেক্টরের লব্ধি","f":"R = √(A² + B² + 2AB cosθ)<br>tanα = B sinθ / (A + B cosθ)","w":"যেকোনো দুটি ভেক্টরের জন্য। θ হলো ভেক্টর দুটির মধ্যবর্তী কোণ, α হলো {A} এর সাথে লব্ধির কোণ।","c":"θ = 90° হলে সরাসরি R = √(A² + B²)। 3-4-5, 6-8-10, 5-12-13 জোড়া মুখস্থ রাখো।","x":"3 N ও 4 N বল পরস্পর লম্ব। লব্ধি কত?","s":["θ = 90°, তাই R = √(3² + 4²)","= √25 = 5 N (3-4-5 জোড়া)","দিক: tanα = 4/3, α ≈ 53° (3 N বলের সাথে)"]},{"h":"সমান মানের দুটি ভেক্টরের লব্ধি","f":"R = 2P cos(θ/2)","w":"শুধু যখন দুটি ভেক্টরের মান সমান (P)। লব্ধি মধ্যবর্তী কোণকে সমদ্বিখণ্ডিত করে।","c":"মুখস্থ রাখো: 60° → P√3, 90° → P√2, 120° → P, 180° → 0","x":"10 N মানের দুটি বল 60° কোণে ক্রিয়া করছে। লব্ধি কত?","s":["R = 2 × 10 × cos30°","= 20 × (√3/2) = 10√3 N","শর্টকাটে: 60° মানে P√3 = 10√3 N"]},{"h":"উপাংশ","f":"A<sub>x</sub> = A cosθ, A<sub>y</sub> = A sinθ","w":"θ হলো x অক্ষের সাথে ভেক্টরের কোণ।","c":"যে অক্ষের সাথে কোণ দেওয়া আছে, সেই অক্ষের উপাংশে cos বসে।","x":"10 N বল অনুভূমিকের সাথে 30° কোণে ক্রিয়া করছে। উপাংশ দুটি কত?","s":["F<sub>x</sub> = 10 cos30° = 5√3 N","F<sub>y</sub> = 10 sin30° = 5 N"]},{"h":"মান ও একক ভেক্টর","f":"|{A}| = √(A<sub>x</sub>² + A<sub>y</sub>² + A<sub>z</sub>²)<br>[A] = {A}/|{A}|","w":"আয়তাকার উপাংশ জানা থাকলে।","c":"ত্রিমাত্রিক জোড়া মুখস্থ: (1, 2, 2) → 3, (2, 3, 6) → 7, (2, 2, 1) → 3।","x":"{A} = 2[i] + 3[j] + 6[k] এর মান ও একক ভেক্টর কত?","s":["|{A}| = √(4 + 9 + 36) = √49 = 7","[A] = (2[i] + 3[j] + 6[k])/7"]},{"h":"ডট গুণন ও মধ্যবর্তী কোণ","f":"{A}·{B} = AB cosθ = A<sub>x</sub>B<sub>x</sub> + A<sub>y</sub>B<sub>y</sub> + A<sub>z</sub>B<sub>z</sub><br>cosθ = ({A}·{B}) / (AB)","w":"দুটি ভেক্টরের মধ্যবর্তী কোণ বা লম্ব কিনা যাচাইয়ে।","c":"লম্ব কিনা দেখতে কোণ বের করার দরকার নেই: শুধু একই অক্ষের উপাংশের গুণফল যোগ করে 0 হয় কিনা দেখো।","x":"{A} = 2[i] + 3[j] − [k] এবং {B} = [i] + [j] + 5[k] কি পরস্পর লম্ব?","s":["{A}·{B} = 2(1) + 3(1) + (−1)(5)","= 2 + 3 − 5 = 0","ডট গুণন শূন্য, তাই পরস্পর লম্ব"]},{"h":"অভিক্ষেপ","f":"{B} বরাবর {A} এর অভিক্ষেপ = A cosθ = ({A}·{B}) / B","w":"একটি ভেক্টরের অন্য ভেক্টরের দিকে কার্যকর অংশ বের করতে।","c":"যার “বরাবর” অভিক্ষেপ, তার মান দিয়ে ভাগ।","x":"{A} = 2[i] + [j] এর {B} = 3[i] + 4[j] বরাবর অভিক্ষেপ কত?","s":["{A}·{B} = 6 + 4 = 10","|{B}| = 5","অভিক্ষেপ = 10/5 = 2"]},{"h":"ক্রস গুণন ও ক্ষেত্রফল","f":"|{A} × {B}| = AB sinθ<br>দ্বিমাত্রিকে: {A} × {B} = (A<sub>x</sub>B<sub>y</sub> − A<sub>y</sub>B<sub>x</sub>)[k]","w":"সামান্তরিকের ক্ষেত্রফল = |{A} × {B}|, ত্রিভুজের ক্ষেত্রফল = ½|{A} × {B}|।","c":"z উপাংশ না থাকলে পুরো নির্ণায়ক লাগে না, শুধু A<sub>x</sub>B<sub>y</sub> − A<sub>y</sub>B<sub>x</sub>।","x":"{A} = 3[i] + [j] ও {B} = [i] + 2[j] দ্বারা গঠিত সামান্তরিক ও ত্রিভুজের ক্ষেত্রফল কত?","s":["{A} × {B} = (3 × 2 − 1 × 1)[k] = 5[k]","সামান্তরিক = 5 বর্গ একক","ত্রিভুজ = 2.5 বর্গ একক"]},{"h":"নদী পারাপার","f":"ন্যূনতম সময়: t = d/v, ভাটিতে সরণ x = u·d/v<br>ন্যূনতম দূরত্ব: t = d/√(v² − u²), স্রোতের বিপরীতে কোণ sinβ = u/v","w":"d = নদীর প্রস্থ, v = স্থির পানিতে নৌকার বেগ, u = স্রোতের বেগ। β মাপা হয় তীরের লম্ব থেকে।","c":"v ও u থেকে 3-4-5 জোড়া খোঁজো, √(v² − u²) মুখে মুখে বের হবে।","x":"200 m প্রশস্ত নদীতে স্রোত 3 m/s, নৌকার বেগ 5 m/s। ন্যূনতম সময় ও সোজা পার হওয়ার সময় কত?","s":["ন্যূনতম সময়: t = 200/5 = 40 s, ভাটিতে সরণ = 3 × 40 = 120 m","সোজা পার: √(25 − 9) = 4 m/s, t = 200/4 = 50 s"]},{"h":"ক্রস গুণন: পূর্ণ নির্ণায়ক (3 × 3)","f":"{A} × {B} = <span class=\"det\"><span>[i]</span><span>[j]</span><span>[k]</span><span>A<sub>x</sub></span><span>A<sub>y</sub></span><span>A<sub>z</sub></span><span>B<sub>x</sub></span><span>B<sub>y</sub></span><span>B<sub>z</sub></span></span><br>= (A<sub>y</sub>B<sub>z</sub> − A<sub>z</sub>B<sub>y</sub>)[i] − (A<sub>x</sub>B<sub>z</sub> − A<sub>z</sub>B<sub>x</sub>)[j] + (A<sub>x</sub>B<sub>y</sub> − A<sub>y</sub>B<sub>x</sub>)[k]","w":"তিনটি উপাংশই আছে এমন দুটি ভেক্টরের ক্রস গুণনে।","c":"মাঝের [j] পদের আগে ঋণাত্মক চিহ্ন, এটাই সবচেয়ে সাধারণ ভুল। উত্তর মিলিয়ে নিতে: ফলাফলের সাথে {A} এর ডট গুণন 0 হতেই হবে।","x":"{A} = 2[i] + 3[j] − [k] এবং {B} = [i] − [j] + 2[k] হলে {A} × {B} কত?","s":["[i]: 3 × 2 − (−1)(−1) = 6 − 1 = 5","[j]: −(2 × 2 − (−1)(1)) = −(4 + 1) = −5","[k]: 2(−1) − 3 × 1 = −5","{A} × {B} = 5[i] − 5[j] − 5[k]; যাচাই: 10 − 15 + 5 = 0 ✓"]},{"h":"ডট ও ক্রস থেকে কোণ","f":"tanθ = |{A} × {B}| / ({A}·{B})","w":"যখন ডট ও ক্রস গুণন দুটোই জানা বা সহজে বের করা যায়।","c":"|{A} × {B}| = {A}·{B} → 45°; |{A} × {B}| = √3({A}·{B}) → 60°; √3|{A} × {B}| = {A}·{B} → 30°।","x":"{A} = [i] + [j] এবং {B} = [i] এর মধ্যবর্তী কোণ কত?","s":["{A}·{B} = 1","{A} × {B} = (1 × 0 − 1 × 1)[k] = −[k], মান 1","tanθ = 1/1 = 1 ⇒ θ = 45°"]},{"h":"কর্ণ থেকে সামান্তরিকের ক্ষেত্রফল","f":"ক্ষেত্রফল = ½|{d₁} × {d₂}|","w":"বাহু নয়, কর্ণ দুটি দেওয়া থাকলে।","c":"বাহু দেওয়া থাকলে ½ লাগে না। প্রশ্নে “কর্ণ” শব্দটি খুঁজে নাও।","x":"কর্ণ {d₁} = 3[i] + [j] − 2[k] ও {d₂} = [i] − 3[j] + 4[k] হলে ক্ষেত্রফল কত?","s":["{d₁} × {d₂} = (4 − 6)[i] − (12 + 2)[j] + (−9 − 1)[k] = −2[i] − 14[j] − 10[k]","|{d₁} × {d₂}| = √(4 + 196 + 100) = √300 = 10√3","ক্ষেত্রফল = ½ × 10√3 = 5√3 বর্গ একক"]},{"h":"সমান্তরাল, লম্ব ও কাজ শূন্য: অজানা বের করা","f":"সমান্তরাল: A<sub>x</sub>/B<sub>x</sub> = A<sub>y</sub>/B<sub>y</sub> = A<sub>z</sub>/B<sub>z</sub><br>লম্ব বা কাজ শূন্য: A<sub>x</sub>B<sub>x</sub> + A<sub>y</sub>B<sub>y</sub> + A<sub>z</sub>B<sub>z</sub> = 0","w":"প্রশ্নে একটি উপাংশ অজানা (m, a, p ইত্যাদি) থাকলে।","c":"“সমান্তরাল” দেখলে অনুপাত, “লম্ব” বা “কোনো কাজ হয় না” দেখলে ডট গুণন = 0।","x":"(ক) {A} = 2[i] + 3[j] − [k] ও {B} = 4[i] + m[j] − 2[k] সমান্তরাল হলে m কত? (খ) {F} = 3[i] + 2[j] − 4[k] N বল সরণ {s} = 2[i] + m[j] + [k] m ঘটালে কাজ শূন্য হলে m কত?","s":["(ক) অনুপাত 4/2 = 2, তাই m = 2 × 3 = 6","(খ) 3 × 2 + 2m + (−4)(1) = 0 ⇒ 2 + 2m = 0 ⇒ m = −1"]},{"h":"লন রোলার: টানা ও ঠেলা","f":"টানা: N = mg − F sinθ<br>ঠেলা: N = mg + F sinθ<br>সামনে চালনাকারী উপাংশ দুই ক্ষেত্রেই F cosθ","w":"θ অনুভূমিকের সাথে হাতলের কোণ, N হলো ভূমির অভিলম্ব প্রতিক্রিয়া (আপাত ওজন)।","c":"টানলে হাতল রোলারকে একটু তুলে ধরে, তাই বিয়োগ; ঠেললে চেপে ধরে, তাই যোগ।","x":"20 kg রোলারকে অনুভূমিকের সাথে 30° কোণে 100 N বলে টানলে ও ঠেললে N কত? (g = 9.8 m s⁻²)","s":["mg = 196 N, F sin30° = 50 N","টানা: N = 196 − 50 = 146 N","ঠেলা: N = 196 + 50 = 246 N"]},{"h":"বৃষ্টি ও ছাতা (আপেক্ষিক বেগ)","f":"{v}<sub>আপেক্ষিক</sub> = {v}<sub>বৃষ্টি</sub> − {v}<sub>লোক</sub><br>উল্লম্বের সাথে কোণ: tanθ = অনুভূমিক আপেক্ষিক বেগ / উল্লম্ব বেগ","w":"বৃষ্টি-ছাতা, চলন্ত গাড়ির জানালায় বৃষ্টির দাগ, বাতাসসহ বৃষ্টি।","c":"বাতাস থাকলে আগে অনুভূমিক অংশ বের করো: বাতাসের বেগ − লোকের বেগ (একই দিকে হলে)। এটি শূন্য হলে ছাতা খাড়া।","x":"বৃষ্টি 4 m/s বেগে খাড়া পড়ছে, লোক 3 m/s বেগে হাঁটছে। আপেক্ষিক বেগ ও ছাতার কোণ কত?","s":["আপেক্ষিক বেগ = √(4² + 3²) = 5 m/s","tanθ = 3/4 ⇒ θ = tan⁻¹(3/4) ≈ 37°","ছাতা উল্লম্বের সাথে 37° কোণে সামনে হেলিয়ে"]},{"h":"দিক কোসাইন","f":"cosα = A<sub>x</sub>/A, cosβ = A<sub>y</sub>/A, cosγ = A<sub>z</sub>/A<br>cos²α + cos²β + cos²γ = 1","w":"ভেক্টর অক্ষগুলোর সাথে কত কোণ করে, বা দুটি কোণ জেনে তৃতীয়টি বের করতে।","c":"cos² মুখস্থ: 30° → ¾, 45° → ½, 60° → ¼, 90° → 0। দুটি কোণ 60° হলে তৃতীয়টি 45°।","x":"{A} = 2[i] + 3[j] + 6[k] এর দিক কোসাইন কত?","s":["|{A}| = √(4 + 9 + 36) = 7","cosα = 2/7, cosβ = 3/7, cosγ = 6/7","যাচাই: (4 + 9 + 36)/49 = 1 ✓"]},{"h":"ভেক্টর ত্রিগুণন","f":"{A} × ({B} × {C}) = {B}({A}·{C}) − {C}({A}·{B})<br>{A}·({B} × {C}) = নির্ণায়ক, যার সারি {A}, {B}, {C} এর উপাংশ","w":"তিনটি ভেক্টরের গুণন। স্কেলার ত্রিগুণন শূন্য হলে ভেক্টর তিনটি সমতলীয়।","c":"“BAC − CAB” মনে রাখো। বন্ধনীর বাইরের ভেক্টরটি দুই ডট গুণনেই থাকে।","x":"{A} = [i], {B} = [i], {C} = [j] হলে {A} × ({B} × {C}) এবং ({A} × {B}) × {C} কত?","s":["{A} × ({B} × {C}) = [i]([i]·[j]) − [j]([i]·[i]) = 0 − [j] = −[j]","({A} × {B}) × {C} = ([i] × [i]) × [j] = 0","দুটি আলাদা: ক্রস গুণন সংযোগ নিয়ম মানে না"]},{"h":"অবস্থান থেকে বেগ ও ত্বরণ","f":"{v} = d{r}/dt, {a} = d{v}/dt = d²{r}/dt²","w":"অবস্থান ভেক্টর সময়ের ফাংশন হিসেবে দেওয়া থাকলে।","c":"প্রতিটি উপাংশ আলাদাভাবে অন্তরীকরণ করো, তারপর t বসাও। ধ্রুবক উপাংশের অন্তরজ শূন্য।","x":"{r} = (t²[i] + 3t[j] − 2[k]) m হলে t = 2 s এ বেগের মান ও ত্বরণ কত?","s":["{v} = 2t[i] + 3[j]; t = 2 এ {v} = 4[i] + 3[j]","|{v}| = √(16 + 9) = 5 m s⁻¹","{a} = 2[i], মান 2 m s⁻² (ধ্রুব)"]},{"h":"ডাইভারজেন্স ও কার্ল","f":"∇·{V} = ∂V<sub>x</sub>/∂x + ∂V<sub>y</sub>/∂y + ∂V<sub>z</sub>/∂z","w":"ভেক্টর ক্ষেত্রের প্রতিটি উপাংশ জানা থাকলে।","c":"প্রতিটি উপাংশকে শুধু নিজের অক্ষের চলক দিয়ে অন্তরীকরণ করো; অন্য চলকগুলো ধ্রুবক।","x":"{V} = x²[i] + 3y[j] − z[k] হলে (2, 1, 1) বিন্দুতে ∇·{V} কত?","s":["∇·{V} = 2x + 3 − 1 = 2x + 2","x = 2 বসিয়ে = 6"]}];
+const SECS=[['rules','নিয়ম'],['defs','সংজ্ঞা'],['one','এক কথায় উত্তর'],['short','সংক্ষিপ্ত প্রশ্ন'],['units','একক ও মাত্রা'],['form','সূত্র ও শর্টকাট']];
+function head(i,lead){return`<h2><span class="k">${bn(i+1)}</span>${SECS[i][1]}</h2><p class="lead">${lead}</p>`}
+$('jump').innerHTML=`<button data-to="" aria-pressed="true">সব</button>`+SECS.map(([id,t],i)=>`<button data-to="s-${id}" aria-pressed="false">${bn(i+1)}. ${t}</button>`).join('');
+$('learnBody').innerHTML=
+`<section class="ls" id="s-rules">${head(0,'যে নিয়মগুলো থেকে সরাসরি MCQ আসে।')}<ol class="rules">${RULES.map(r=>`<li>${render(r)}</li>`).join('')}</ol></section>
+<section class="ls" id="s-defs">${head(1,'পরীক্ষায় যে সংজ্ঞাগুলো সবচেয়ে বেশি আসে।')}<dl class="defs">${DEFS.map(([t,d])=>`<dt>${t}</dt><dd>${render(d)}</dd>`).join('')}</dl></section>
+<section class="ls" id="s-one">${head(2,'প্রশ্নে চাপ দিয়ে উত্তর দেখো। আগে নিজে উত্তর ভেবে নাও।')}<button class="showall" data-all="s-one">সব উত্তর দেখাও</button><div class="ol">${ONE.map(([q,a])=>`<details><summary>${render(q)}</summary><div class="ans">→ ${render(a)}</div></details>`).join('')}</div></section>
+<section class="ls" id="s-short">${head(3,'২–৩ লাইনে লেখার মতো “কেন” প্রশ্ন।')}<button class="showall" data-all="s-short">সব উত্তর দেখাও</button><div class="sa">${SHORT.map(([q,a])=>`<details><summary>${render(q)}</summary><div class="ans">${render(a)}</div></details>`).join('')}</div></section>
+<section class="ls" id="s-units">${head(4,'এই অধ্যায়ের রাশিগুলোর ধরন, SI একক ও মাত্রা।')}<div class="tblw"><table class="u"><thead><tr><th>রাশি</th><th>ধরন</th><th>SI একক</th><th>মাত্রা</th></tr></thead><tbody>${UNITS.map(([a,b,c,d])=>`<tr><td>${a}</td><td>${b}</td><td class="mono">${c}</td><td class="mono">${d==='মাত্রাহীন'?d:'['+d+']'}</td></tr>`).join('')}</tbody></table></div>
+<div class="trap"><b>ফাঁদ:</b> কাজ ও টর্কের মাত্রা একই [ML²T⁻²], কিন্তু কাজ স্কেলার আর টর্ক ভেক্টর। টর্কের একক N m লেখা হয়, J নয়।</div></section>
+<section class="ls" id="s-form">${head(5,'প্রতিটি সূত্র কখন খাটে, দ্রুত সমাধানের কৌশল, আর একটি সমাধান করা উদাহরণ।')}${FORM.map(o=>`<div class="fc"><h3>${o.h}</h3><div class="fx">${render(o.f)}</div><div class="fl"><span>কখন খাটে</span><span>${render(o.w)}</span><span>শর্টকাট</span><span>${render(o.c)}</span><span>উদাহরণ</span><span class="ex">${render(o.x)}<ol>${o.s.map(x=>`<li>${render(x)}</li>`).join('')}</ol></span></div></div>`).join('')}</section>`;
+$('jump').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const to=b.dataset.to;
+ $('jump').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+ document.querySelectorAll('#learnBody>.ls').forEach(sec=>sec.hidden=!!to&&sec.id!==to)});
+$('learnBody').addEventListener('click',e=>{const b=e.target.closest('.showall');if(!b)return;const ds=$(b.dataset.all).querySelectorAll('details');const open=b.dataset.open!=='1';ds.forEach(d=>d.open=open);b.dataset.open=open?'1':'0';b.textContent=open?'সব উত্তর লুকাও':'সব উত্তর দেখাও'});
+
+function show(v){const t=v==='test';['learn','test','past'].forEach(x=>{$('v-'+x).hidden=x!==v;$('tab-'+x).setAttribute('aria-selected',x===v)});
+ if(t)startTimer();else{clearInterval(S.timer);S.timer=null}
+ if(location.hash!=='#'+v)history.replaceState(null,'','#'+v);window.scrollTo({top:0})}
+$('tab-learn').onclick=()=>show('learn');$('tab-past').onclick=()=>show('past');$('tab-test').onclick=()=>show('test');$('go-test').onclick=()=>show('test');
+const view=()=>['#test','#past'].includes(location.hash)?location.hash.slice(1):'learn';
+window.addEventListener('hashchange',()=>show(view()));
+
+$('submit').onclick=finish;$('new').onclick=newTest;
+$('count').onchange=e=>{S.n=e.target.value==='all'?'all':+e.target.value;newTest()};
+['practice','exam'].forEach(m=>$('m-'+m).onclick=()=>{S.mode=m;$('m-practice').setAttribute('aria-pressed',m==='practice');$('m-exam').setAttribute('aria-pressed',m==='exam');newTest()});
+newTest();renderPast();show(view());
+}
+</script>
+
+</body></html>

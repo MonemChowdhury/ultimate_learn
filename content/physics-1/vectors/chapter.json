@@ -1,0 +1,31 @@
+{
+ "id": "physics-1/vectors",
+ "subject": "পদার্থবিজ্ঞান ১ম পত্র",
+ "chapterNo": 2,
+ "title": "ভেক্টর",
+ "pageTitle": "ভেক্টর টেস্ট জেনারেটর",
+ "subtitle": "পদার্থবিজ্ঞান ১ম পত্র, অধ্যায় ২ · বিশ্ববিদ্যালয় ভর্তি প্রস্তুতি",
+ "topics": {
+  "SV": "স্কেলার ও ভেক্টর",
+  "TY": "ভেক্টরের প্রকারভেদ",
+  "AD": "ভেক্টর যোগ ও লব্ধি",
+  "RC": "উপাংশ ও একক ভেক্টর",
+  "DOT": "ডট গুণন",
+  "CR": "ক্রস গুণন",
+  "RV": "নদী-নৌকা ও আপেক্ষিক বেগ",
+  "CAL": "ভেক্টর ক্যালকুলাস",
+  "DC": "ডট ও ক্রস একসাথে"
+ },
+ "weights": {
+  "DOT": 26,
+  "CR": 22,
+  "RV": 17,
+  "AD": 17,
+  "RC": 11,
+  "DC": 4,
+  "CAL": 2,
+  "SV": 4,
+  "TY": 4
+ },
+ "weightsNote": "Share of each topic in a test, from 46 real admission questions (2000–2019). Theory topics SV and TY get a small fixed share."
+}
